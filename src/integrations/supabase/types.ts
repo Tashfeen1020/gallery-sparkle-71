@@ -14,13 +14,68 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      photos: {
+        Row: {
+          created_at: string
+          file_name: string
+          id: string
+          pin_hash: string
+          storage_path: string
+          uploader_name: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          id?: string
+          pin_hash: string
+          storage_path: string
+          uploader_name: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          id?: string
+          pin_hash?: string
+          storage_path?: string
+          uploader_name?: string
+          url?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      photos_public: {
+        Row: {
+          created_at: string | null
+          file_name: string | null
+          id: string | null
+          storage_path: string | null
+          uploader_name: string | null
+          url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          file_name?: string | null
+          id?: string | null
+          storage_path?: string | null
+          uploader_name?: string | null
+          url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          file_name?: string | null
+          id?: string | null
+          storage_path?: string | null
+          uploader_name?: string | null
+          url?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
-      [_ in never]: never
+      delete_photo: { Args: { p_id: string; p_pin: string }; Returns: string }
     }
     Enums: {
       [_ in never]: never
