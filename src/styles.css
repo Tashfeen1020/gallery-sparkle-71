@@ -105,11 +105,105 @@
   --sidebar-ring: oklch(0.62 0.2 285);
 }
 
+.light {
+  --background: oklch(0.985 0.006 275);
+  --foreground: oklch(0.25 0.04 275);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.25 0.04 275);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.25 0.04 275);
+  --primary: oklch(0.58 0.2 285);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.95 0.015 275);
+  --secondary-foreground: oklch(0.3 0.04 275);
+  --muted: oklch(0.95 0.015 275);
+  --muted-foreground: oklch(0.5 0.03 280);
+  --accent: oklch(0.93 0.03 285);
+  --accent-foreground: oklch(0.3 0.04 275);
+  --destructive: oklch(0.6 0.22 22);
+  --destructive-foreground: oklch(0.99 0 0);
+  --border: oklch(0.9 0.015 277);
+  --input: oklch(0.975 0.008 275);
+  --ring: oklch(0.58 0.2 285);
+  --gold: oklch(0.72 0.15 87);
+  --pink: oklch(0.66 0.2 5);
+  --cyan: oklch(0.7 0.13 210);
+}
+
 @utility app-backdrop {
+  position: relative;
+  isolation: isolate;
   background:
     radial-gradient(900px 500px at 10% -10%, color-mix(in oklab, var(--primary) 45%, transparent), transparent 60%),
     radial-gradient(800px 500px at 100% 0%, color-mix(in oklab, var(--cyan) 30%, transparent), transparent 55%),
     var(--background);
+  transition: background-color 0.5s ease;
+}
+
+.light .app-backdrop {
+  background:
+    radial-gradient(900px 500px at 10% -10%, color-mix(in oklab, var(--primary) 14%, transparent), transparent 60%),
+    radial-gradient(800px 500px at 100% 0%, color-mix(in oklab, var(--cyan) 16%, transparent), transparent 55%),
+    var(--background);
+}
+
+/* Ambient animated layer: drifting particles (dark) / pastel waves (light) */
+@utility fx-ambient {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: 0.9;
+}
+
+@utility fx-particles {
+  position: absolute;
+  inset: -20%;
+  background-image:
+    radial-gradient(2px 2px at 20% 30%, color-mix(in oklab, var(--cyan) 70%, transparent), transparent 60%),
+    radial-gradient(2px 2px at 70% 60%, color-mix(in oklab, var(--pink) 70%, transparent), transparent 60%),
+    radial-gradient(1.5px 1.5px at 40% 80%, color-mix(in oklab, var(--gold) 70%, transparent), transparent 60%),
+    radial-gradient(1.5px 1.5px at 85% 20%, color-mix(in oklab, var(--primary) 80%, transparent), transparent 60%),
+    radial-gradient(2px 2px at 10% 70%, color-mix(in oklab, var(--foreground) 40%, transparent), transparent 60%);
+  background-size: 320px 320px, 420px 420px, 260px 260px, 380px 380px, 300px 300px;
+  animation: fx-drift 38s linear infinite;
+}
+
+@utility fx-wave {
+  position: absolute;
+  left: -25%;
+  right: -25%;
+  height: 70vh;
+  filter: blur(60px);
+  border-radius: 45%;
+  animation: fx-wave-move 18s ease-in-out infinite;
+}
+
+@keyframes fx-drift {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-160px, -220px, 0);
+  }
+}
+
+@keyframes fx-wave-move {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(3%, -4%, 0) rotate(6deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fx-particles,
+  .fx-wave {
+    animation: none;
+  }
 }
 
 @utility text-gradient {
@@ -128,6 +222,7 @@
   color: var(--primary-foreground);
   box-shadow: 0 8px 24px color-mix(in oklab, var(--primary) 40%, transparent);
 }
+
 
 
 .dark {
