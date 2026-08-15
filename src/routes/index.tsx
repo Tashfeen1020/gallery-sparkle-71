@@ -192,7 +192,7 @@ function Index() {
         <section className="rounded-2xl border border-border bg-card p-5 shadow-xl">
           <form
             onSubmit={handleUpload}
-            className="grid items-end gap-4 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_140px_auto]"
+            className="grid items-end gap-4 sm:grid-cols-2 lg:grid-cols-4"
           >
             <div className="grid gap-1.5">
               <label htmlFor="name" className="text-xs uppercase tracking-wider text-muted-foreground">
