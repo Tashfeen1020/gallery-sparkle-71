@@ -161,6 +161,26 @@ function Index() {
     setPhotos((p) => p.filter((x) => x.id !== photo.id));
   }
 
+  async function handleSave(photo: Photo) {
+    try {
+      const { data, error } = await supabase.storage
+        .from("photos")
+        .download(photo.storage_path);
+      if (error) throw error;
+      const url = URL.createObjectURL(data);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = photo.file_name || "photo.jpg";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      notify("Photo saved to your device.");
+    } catch (err) {
+      notify(`Save failed: ${(err as Error).message}`, true);
+    }
+  }
+
   function toggleFavourite(id: string) {
     setFavourites((prev) => {
       const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
@@ -318,6 +338,15 @@ function Index() {
                       }`}
                     >
                       {favourites.includes(p.id) ? "★" : "☆"}
+                    </button>
+                    <button
+                      type="button"
+                      title="Save photo"
+                      aria-label={`Save photo uploaded by ${p.uploader_name}`}
+                      onClick={() => void handleSave(p)}
+                      className="grid h-9 w-9 place-items-center rounded-xl border border-border bg-input text-muted-foreground transition hover:border-primary hover:text-primary"
+                    >
+                      ⬇
                     </button>
                     <button
                       type="button"
