@@ -168,6 +168,7 @@ function Index() {
         detected = res.category as Category;
       } catch (aiErr) {
         console.error("[categorize] failed", aiErr);
+        notify(String(aiErr), true);
       }
 
       setStage("upload");

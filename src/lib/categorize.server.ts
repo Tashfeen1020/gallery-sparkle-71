@@ -29,7 +29,7 @@ export async function detectCategory(dataUrl: string): Promise<Category> {
           ],
         },
       ],
-      max_tokens: 10,
+      max_tokens: 64,
     }),
   });
 
@@ -43,5 +43,6 @@ export async function detectCategory(dataUrl: string): Promise<Category> {
   };
   const raw = (json.choices?.[0]?.message?.content ?? "").trim().toLowerCase();
   const match = CATEGORIES.find((c) => raw.includes(c.toLowerCase()));
+  console.log("[categorize] raw:", raw, "->", match ?? "Other");
   return match ?? "Other";
 }
