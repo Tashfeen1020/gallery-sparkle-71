@@ -1,5 +1,18 @@
 export type Lang = "en" | "bn" | "ar";
 
+export const CATEGORIES = [
+  "Cars",
+  "Nature",
+  "People",
+  "Animals",
+  "Food",
+  "Architecture",
+  "Art",
+  "Other",
+] as const;
+
+export type Category = (typeof CATEGORIES)[number];
+
 export const LANGS: { code: Lang; label: string }[] = [
   { code: "en", label: "English" },
   { code: "bn", label: "বাংলা" },
@@ -39,6 +52,13 @@ export type Dict = {
   loadFailed: (m: string) => string;
   theme: string;
   language: string;
+  viewPhoto: string;
+  close: string;
+  allCategories: string;
+  compressing: string;
+  analyzing: string;
+  uploadedBy: string;
+  categoryNames: Record<Category, string>;
 };
 
 export const dictionaries: Record<Lang, Dict> = {
@@ -76,6 +96,22 @@ export const dictionaries: Record<Lang, Dict> = {
     loadFailed: (m) => `Could not load gallery: ${m}`,
     theme: "Toggle theme",
     language: "Language",
+    viewPhoto: "View photo",
+    close: "Close",
+    allCategories: "All",
+    compressing: "Compressing image…",
+    analyzing: "AI is analysing…",
+    uploadedBy: "Uploaded by",
+    categoryNames: {
+      Cars: "Cars",
+      Nature: "Nature",
+      People: "People",
+      Animals: "Animals",
+      Food: "Food",
+      Architecture: "Architecture",
+      Art: "Art",
+      Other: "Other",
+    },
   },
   bn: {
     title: "পিক্সেল ভল্ট",
@@ -111,6 +147,22 @@ export const dictionaries: Record<Lang, Dict> = {
     loadFailed: (m) => `গ্যালারি লোড করা যায়নি: ${m}`,
     theme: "থিম পরিবর্তন",
     language: "ভাষা",
+    viewPhoto: "ছবি দেখুন",
+    close: "বন্ধ করুন",
+    allCategories: "সব",
+    compressing: "ছবি সংকুচিত হচ্ছে…",
+    analyzing: "এআই বিশ্লেষণ করছে…",
+    uploadedBy: "আপলোড করেছেন",
+    categoryNames: {
+      Cars: "গাড়ি",
+      Nature: "প্রকৃতি",
+      People: "মানুষ",
+      Animals: "প্রাণী",
+      Food: "খাবার",
+      Architecture: "স্থাপত্য",
+      Art: "শিল্প",
+      Other: "অন্যান্য",
+    },
   },
   ar: {
     title: "خزنة البكسل",
@@ -146,5 +198,21 @@ export const dictionaries: Record<Lang, Dict> = {
     loadFailed: (m) => `تعذّر تحميل المعرض: ${m}`,
     theme: "تبديل السمة",
     language: "اللغة",
+    viewPhoto: "عرض الصورة",
+    close: "إغلاق",
+    allCategories: "الكل",
+    compressing: "جارٍ ضغط الصورة…",
+    analyzing: "تحليل الذكاء الاصطناعي…",
+    uploadedBy: "رفعها",
+    categoryNames: {
+      Cars: "سيارات",
+      Nature: "طبيعة",
+      People: "أشخاص",
+      Animals: "حيوانات",
+      Food: "طعام",
+      Architecture: "عمارة",
+      Art: "فن",
+      Other: "أخرى",
+    },
   },
 };

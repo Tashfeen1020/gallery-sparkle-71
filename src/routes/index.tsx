@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { dictionaries, LANGS, type Lang } from "@/lib/i18n";
+import { CATEGORIES, dictionaries, LANGS, type Category, type Lang } from "@/lib/i18n";
+import { compressImage, makeThumbDataUrl } from "@/lib/compress";
+import { categorizePhoto } from "@/lib/categorize.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -29,6 +31,7 @@ type Photo = {
   uploader_name: string;
   storage_path: string;
   file_name: string;
+  category: Category;
   created_at: string;
   signedUrl: string;
 };
@@ -69,6 +72,9 @@ function Index() {
   const [pin, setPin] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [fileKey, setFileKey] = useState(0);
+  const [stage, setStage] = useState<"compress" | "analyze" | "upload">("upload");
+  const [category, setCategory] = useState<Category | "All">("All");
+  const [lightbox, setLightbox] = useState<Photo | null>(null);
 
   const t = dictionaries[lang];
   const rtl = lang === "ar";
@@ -101,7 +107,7 @@ function Index() {
   const loadPhotos = useCallback(async () => {
     const { data, error } = await supabase
       .from("photos_public")
-      .select("id, uploader_name, storage_path, file_name, created_at")
+      .select("id, uploader_name, storage_path, file_name, category, created_at")
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -128,6 +134,9 @@ function Index() {
         uploader_name: r.uploader_name as string,
         storage_path: r.storage_path as string,
         file_name: r.file_name as string,
+        category: (CATEGORIES as readonly string[]).includes(r.category ?? "")
+          ? (r.category as Category)
+          : "Other",
         created_at: r.created_at as string,
         signedUrl: urls[r.storage_path as string] ?? "",
       })),
@@ -148,12 +157,31 @@ function Index() {
 
     setUploading(true);
     try {
-      const safeName = file.name.replace(/[^\w.-]/g, "_");
+      setStage("compress");
+      const optimized = await compressImage(file);
+
+      setStage("analyze");
+      let detected: Category = "Other";
+      try {
+        const thumb = await makeThumbDataUrl(optimized);
+        const res = (await categorizePhoto({ data: { dataUrl: thumb } })) as
+          | { category?: string; result?: { category?: string } }
+          | undefined;
+        const raw = res?.category ?? res?.result?.category;
+        if (raw && (CATEGORIES as readonly string[]).includes(raw)) {
+          detected = raw as Category;
+        }
+      } catch (aiErr) {
+        console.error("[categorize] failed", aiErr);
+      }
+
+      setStage("upload");
+      const safeName = optimized.name.replace(/[^\w.-]/g, "_");
       const path = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}_${safeName}`;
 
       const { error: upErr } = await supabase.storage
         .from("photos")
-        .upload(path, file, { contentType: file.type });
+        .upload(path, optimized, { contentType: optimized.type });
       if (upErr) throw upErr;
 
       const { error: dbErr } = await supabase.from("photos").insert({
@@ -162,6 +190,7 @@ function Index() {
         url: path,
         storage_path: path,
         file_name: file.name,
+        category: detected,
       });
       if (dbErr) {
         await supabase.storage.from("photos").remove([path]);
@@ -234,37 +263,24 @@ function Index() {
     const term = search.trim().toLowerCase();
     return photos.filter((p) => {
       if (favOnly && !favourites.includes(p.id)) return false;
+      if (category !== "All" && p.category !== category) return false;
       if (!term) return true;
       return `${p.uploader_name} ${p.file_name}`.toLowerCase().includes(term);
     });
-  }, [photos, search, favOnly, favourites]);
+  }, [photos, search, favOnly, favourites, category]);
+
+  const usedCategories = useMemo(
+    () => CATEGORIES.filter((c) => photos.some((p) => p.category === c)),
+    [photos],
+  );
 
   return (
     <main className="app-backdrop min-h-screen" dir={rtl ? "rtl" : "ltr"}>
       <div className="fx-ambient" aria-hidden="true">
-        {theme === "dark" ? (
-          <div className="fx-particles" />
-        ) : (
-          <>
-            <div
-              className="fx-wave"
-              style={{
-                top: "-10%",
-                background:
-                  "linear-gradient(90deg, color-mix(in oklab, var(--cyan) 35%, transparent), color-mix(in oklab, var(--primary) 25%, transparent))",
-              }}
-            />
-            <div
-              className="fx-wave"
-              style={{
-                bottom: "-20%",
-                animationDelay: "-6s",
-                background:
-                  "linear-gradient(90deg, color-mix(in oklab, var(--pink) 25%, transparent), color-mix(in oklab, var(--gold) 30%, transparent))",
-              }}
-            />
-          </>
-        )}
+        <div className="fx-blob fx-blob-1" />
+        <div className="fx-blob fx-blob-2" />
+        <div className="fx-blob fx-blob-3" />
+        {theme === "dark" && <div className="fx-particles" />}
       </div>
 
       <div className="mx-auto max-w-6xl px-4 pb-24 pt-8">
@@ -358,7 +374,13 @@ function Index() {
               disabled={uploading}
               className="btn-hero rounded-xl px-6 py-3 font-semibold transition hover:brightness-110 disabled:opacity-60"
             >
-              {uploading ? t.uploading : t.upload}
+              {uploading
+                ? stage === "compress"
+                  ? t.compressing
+                  : stage === "analyze"
+                    ? t.analyzing
+                    : t.uploading
+                : t.upload}
             </button>
           </form>
         </section>
@@ -398,6 +420,23 @@ function Index() {
           </button>
         </div>
 
+        <div className="mb-6 flex flex-wrap gap-2">
+          {(["All", ...usedCategories] as const).map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setCategory(c as Category | "All")}
+              className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                category === c
+                  ? "border-transparent bg-primary text-primary-foreground"
+                  : "border-border bg-input text-muted-foreground hover:border-primary hover:text-primary"
+              }`}
+            >
+              {c === "All" ? t.allCategories : t.categoryNames[c as Category]}
+            </button>
+          ))}
+        </div>
+
         {loading ? (
           <p className="py-10 text-center text-muted-foreground">{t.loading}</p>
         ) : visible.length === 0 ? (
@@ -411,12 +450,26 @@ function Index() {
                 key={p.id}
                 className="overflow-hidden rounded-2xl border border-border bg-card shadow-lg"
               >
-                <img
-                  src={p.signedUrl}
-                  alt={t.altPhoto(p.uploader_name)}
-                  loading="lazy"
-                  className="aspect-[4/3] w-full object-cover"
-                />
+                <button
+                  type="button"
+                  onClick={() => setLightbox(p)}
+                  title={t.viewPhoto}
+                  aria-label={t.viewPhoto}
+                  className="group relative block w-full overflow-hidden"
+                >
+                  <img
+                    src={p.signedUrl}
+                    alt={t.altPhoto(p.uploader_name)}
+                    loading="lazy"
+                    className="aspect-[4/3] w-full object-cover transition duration-300 group-hover:scale-105"
+                  />
+                  <span className="absolute left-2 top-2 rounded-full bg-background/75 px-2.5 py-1 text-[11px] font-semibold backdrop-blur">
+                    {t.categoryNames[p.category]}
+                  </span>
+                  <span className="absolute inset-0 grid place-items-center bg-background/55 text-sm font-semibold opacity-0 backdrop-blur-[2px] transition group-hover:opacity-100">
+                    🔎 {t.viewPhoto}
+                  </span>
+                </button>
                 <div className="flex items-center justify-between gap-2 p-3">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold">{p.uploader_name}</p>
@@ -465,6 +518,54 @@ function Index() {
           </div>
         )}
       </div>
+
+      {lightbox && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={t.viewPhoto}
+          onClick={() => setLightbox(null)}
+          className="fixed inset-0 z-50 grid place-items-center bg-background/85 p-4 backdrop-blur-md"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="max-h-[92vh] w-full max-w-4xl overflow-hidden rounded-2xl border border-border bg-card shadow-2xl"
+          >
+            <img
+              src={lightbox.signedUrl}
+              alt={t.altPhoto(lightbox.uploader_name)}
+              className="max-h-[70vh] w-full bg-black/40 object-contain"
+            />
+            <div className="flex flex-wrap items-center justify-between gap-3 p-4">
+              <div className="min-w-0">
+                <p className="font-display text-xl font-bold">{lightbox.uploader_name}</p>
+                <p className="truncate text-sm text-muted-foreground">
+                  {lightbox.file_name} · {t.categoryNames[lightbox.category]} ·{" "}
+                  {new Date(lightbox.created_at).toLocaleDateString(
+                    lang === "bn" ? "bn-BD" : lang === "ar" ? "ar-EG" : "en-US",
+                  )}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => void handleSave(lightbox)}
+                  className="rounded-xl border border-border bg-input px-4 py-2 text-sm font-semibold transition hover:border-primary hover:text-primary"
+                >
+                  ⬇ {t.savePhoto}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLightbox(null)}
+                  className="btn-hero rounded-xl px-4 py-2 text-sm font-semibold"
+                >
+                  {t.close}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {toast && (
         <div

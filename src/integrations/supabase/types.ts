@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       photos: {
         Row: {
+          category: string
           created_at: string
           file_name: string
           id: string
@@ -25,6 +26,7 @@ export type Database = {
           url: string
         }
         Insert: {
+          category?: string
           created_at?: string
           file_name: string
           id?: string
@@ -34,6 +36,7 @@ export type Database = {
           url: string
         }
         Update: {
+          category?: string
           created_at?: string
           file_name?: string
           id?: string
@@ -48,6 +51,7 @@ export type Database = {
     Views: {
       photos_public: {
         Row: {
+          category: string | null
           created_at: string | null
           file_name: string | null
           id: string | null
@@ -56,6 +60,7 @@ export type Database = {
           url: string | null
         }
         Insert: {
+          category?: string | null
           created_at?: string | null
           file_name?: string | null
           id?: string | null
@@ -64,6 +69,7 @@ export type Database = {
           url?: string | null
         }
         Update: {
+          category?: string | null
           created_at?: string | null
           file_name?: string | null
           id?: string | null
