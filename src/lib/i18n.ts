@@ -39,6 +39,13 @@ export type Dict = {
   loadFailed: (m: string) => string;
   theme: string;
   language: string;
+  viewPhoto: string;
+  close: string;
+  allCategories: string;
+  compressing: string;
+  analyzing: string;
+  uploadedBy: string;
+  categoryNames: Record<Category, string>;
 };
 
 export const dictionaries: Record<Lang, Dict> = {
