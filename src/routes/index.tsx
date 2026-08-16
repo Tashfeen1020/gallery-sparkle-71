@@ -258,37 +258,24 @@ function Index() {
     const term = search.trim().toLowerCase();
     return photos.filter((p) => {
       if (favOnly && !favourites.includes(p.id)) return false;
+      if (category !== "All" && p.category !== category) return false;
       if (!term) return true;
       return `${p.uploader_name} ${p.file_name}`.toLowerCase().includes(term);
     });
-  }, [photos, search, favOnly, favourites]);
+  }, [photos, search, favOnly, favourites, category]);
+
+  const usedCategories = useMemo(
+    () => CATEGORIES.filter((c) => photos.some((p) => p.category === c)),
+    [photos],
+  );
 
   return (
     <main className="app-backdrop min-h-screen" dir={rtl ? "rtl" : "ltr"}>
       <div className="fx-ambient" aria-hidden="true">
-        {theme === "dark" ? (
-          <div className="fx-particles" />
-        ) : (
-          <>
-            <div
-              className="fx-wave"
-              style={{
-                top: "-10%",
-                background:
-                  "linear-gradient(90deg, color-mix(in oklab, var(--cyan) 35%, transparent), color-mix(in oklab, var(--primary) 25%, transparent))",
-              }}
-            />
-            <div
-              className="fx-wave"
-              style={{
-                bottom: "-20%",
-                animationDelay: "-6s",
-                background:
-                  "linear-gradient(90deg, color-mix(in oklab, var(--pink) 25%, transparent), color-mix(in oklab, var(--gold) 30%, transparent))",
-              }}
-            />
-          </>
-        )}
+        <div className="fx-blob fx-blob-1" />
+        <div className="fx-blob fx-blob-2" />
+        <div className="fx-blob fx-blob-3" />
+        {theme === "dark" && <div className="fx-particles" />}
       </div>
 
       <div className="mx-auto max-w-6xl px-4 pb-24 pt-8">
@@ -382,7 +369,13 @@ function Index() {
               disabled={uploading}
               className="btn-hero rounded-xl px-6 py-3 font-semibold transition hover:brightness-110 disabled:opacity-60"
             >
-              {uploading ? t.uploading : t.upload}
+              {uploading
+                ? stage === "compress"
+                  ? t.compressing
+                  : stage === "analyze"
+                    ? t.analyzing
+                    : t.uploading
+                : t.upload}
             </button>
           </form>
         </section>
@@ -422,6 +415,23 @@ function Index() {
           </button>
         </div>
 
+        <div className="mb-6 flex flex-wrap gap-2">
+          {(["All", ...usedCategories] as const).map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setCategory(c as Category | "All")}
+              className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                category === c
+                  ? "border-transparent bg-primary text-primary-foreground"
+                  : "border-border bg-input text-muted-foreground hover:border-primary hover:text-primary"
+              }`}
+            >
+              {c === "All" ? t.allCategories : t.categoryNames[c as Category]}
+            </button>
+          ))}
+        </div>
+
         {loading ? (
           <p className="py-10 text-center text-muted-foreground">{t.loading}</p>
         ) : visible.length === 0 ? (
@@ -435,12 +445,26 @@ function Index() {
                 key={p.id}
                 className="overflow-hidden rounded-2xl border border-border bg-card shadow-lg"
               >
-                <img
-                  src={p.signedUrl}
-                  alt={t.altPhoto(p.uploader_name)}
-                  loading="lazy"
-                  className="aspect-[4/3] w-full object-cover"
-                />
+                <button
+                  type="button"
+                  onClick={() => setLightbox(p)}
+                  title={t.viewPhoto}
+                  aria-label={t.viewPhoto}
+                  className="group relative block w-full overflow-hidden"
+                >
+                  <img
+                    src={p.signedUrl}
+                    alt={t.altPhoto(p.uploader_name)}
+                    loading="lazy"
+                    className="aspect-[4/3] w-full object-cover transition duration-300 group-hover:scale-105"
+                  />
+                  <span className="absolute left-2 top-2 rounded-full bg-background/75 px-2.5 py-1 text-[11px] font-semibold backdrop-blur">
+                    {t.categoryNames[p.category]}
+                  </span>
+                  <span className="absolute inset-0 grid place-items-center bg-background/55 text-sm font-semibold opacity-0 backdrop-blur-[2px] transition group-hover:opacity-100">
+                    🔎 {t.viewPhoto}
+                  </span>
+                </button>
                 <div className="flex items-center justify-between gap-2 p-3">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold">{p.uploader_name}</p>
@@ -489,6 +513,54 @@ function Index() {
           </div>
         )}
       </div>
+
+      {lightbox && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={t.viewPhoto}
+          onClick={() => setLightbox(null)}
+          className="fixed inset-0 z-50 grid place-items-center bg-background/85 p-4 backdrop-blur-md"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="max-h-[92vh] w-full max-w-4xl overflow-hidden rounded-2xl border border-border bg-card shadow-2xl"
+          >
+            <img
+              src={lightbox.signedUrl}
+              alt={t.altPhoto(lightbox.uploader_name)}
+              className="max-h-[70vh] w-full bg-black/40 object-contain"
+            />
+            <div className="flex flex-wrap items-center justify-between gap-3 p-4">
+              <div className="min-w-0">
+                <p className="font-display text-xl font-bold">{lightbox.uploader_name}</p>
+                <p className="truncate text-sm text-muted-foreground">
+                  {lightbox.file_name} · {t.categoryNames[lightbox.category]} ·{" "}
+                  {new Date(lightbox.created_at).toLocaleDateString(
+                    lang === "bn" ? "bn-BD" : lang === "ar" ? "ar-EG" : "en-US",
+                  )}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => void handleSave(lightbox)}
+                  className="rounded-xl border border-border bg-input px-4 py-2 text-sm font-semibold transition hover:border-primary hover:text-primary"
+                >
+                  ⬇ {t.savePhoto}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLightbox(null)}
+                  className="btn-hero rounded-xl px-4 py-2 text-sm font-semibold"
+                >
+                  {t.close}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {toast && (
         <div
