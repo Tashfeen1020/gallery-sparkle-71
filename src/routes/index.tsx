@@ -31,6 +31,7 @@ type Photo = {
   uploader_name: string;
   storage_path: string;
   file_name: string;
+  category: Category;
   created_at: string;
   signedUrl: string;
 };
