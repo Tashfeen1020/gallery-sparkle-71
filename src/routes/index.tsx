@@ -154,12 +154,26 @@ function Index() {
 
     setUploading(true);
     try {
-      const safeName = file.name.replace(/[^\w.-]/g, "_");
+      setStage("compress");
+      const optimized = await compressImage(file);
+
+      setStage("analyze");
+      let category: Category = "Other";
+      try {
+        const thumb = await makeThumbDataUrl(optimized);
+        const res = await categorizePhoto({ data: { dataUrl: thumb } });
+        category = res.category as Category;
+      } catch (aiErr) {
+        console.error("[categorize] failed", aiErr);
+      }
+
+      setStage("upload");
+      const safeName = optimized.name.replace(/[^\w.-]/g, "_");
       const path = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}_${safeName}`;
 
       const { error: upErr } = await supabase.storage
         .from("photos")
-        .upload(path, file, { contentType: file.type });
+        .upload(path, optimized, { contentType: optimized.type });
       if (upErr) throw upErr;
 
       const { error: dbErr } = await supabase.from("photos").insert({
@@ -168,6 +182,7 @@ function Index() {
         url: path,
         storage_path: path,
         file_name: file.name,
+        category,
       });
       if (dbErr) {
         await supabase.storage.from("photos").remove([path]);
