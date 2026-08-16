@@ -1,5 +1,18 @@
 export type Lang = "en" | "bn" | "ar";
 
+export const CATEGORIES = [
+  "Cars",
+  "Nature",
+  "People",
+  "Animals",
+  "Food",
+  "Architecture",
+  "Art",
+  "Other",
+] as const;
+
+export type Category = (typeof CATEGORIES)[number];
+
 export const LANGS: { code: Lang; label: string }[] = [
   { code: "en", label: "English" },
   { code: "bn", label: "বাংলা" },
