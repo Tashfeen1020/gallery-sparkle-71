@@ -72,6 +72,9 @@ function Index() {
   const [pin, setPin] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [fileKey, setFileKey] = useState(0);
+  const [stage, setStage] = useState<"compress" | "analyze" | "upload">("upload");
+  const [category, setCategory] = useState<Category | "All">("All");
+  const [lightbox, setLightbox] = useState<Photo | null>(null);
 
   const t = dictionaries[lang];
   const rtl = lang === "ar";
