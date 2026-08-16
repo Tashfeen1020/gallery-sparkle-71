@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { dictionaries, LANGS, type Lang } from "@/lib/i18n";
+import { CATEGORIES, dictionaries, LANGS, type Category, type Lang } from "@/lib/i18n";
+import { compressImage, makeThumbDataUrl } from "@/lib/compress";
+import { categorizePhoto } from "@/lib/categorize.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
