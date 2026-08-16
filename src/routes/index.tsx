@@ -164,11 +164,15 @@ function Index() {
       let detected: Category = "Other";
       try {
         const thumb = await makeThumbDataUrl(optimized);
-        const res = await categorizePhoto({ data: { dataUrl: thumb } });
-        detected = res.category as Category;
+        const res = (await categorizePhoto({ data: { dataUrl: thumb } })) as
+          | { category?: string; result?: { category?: string } }
+          | undefined;
+        const raw = res?.category ?? res?.result?.category;
+        if (raw && (CATEGORIES as readonly string[]).includes(raw)) {
+          detected = raw as Category;
+        }
       } catch (aiErr) {
         console.error("[categorize] failed", aiErr);
-        notify(String(aiErr), true);
       }
 
       setStage("upload");
