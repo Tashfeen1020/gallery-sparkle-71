@@ -104,7 +104,7 @@ function Index() {
   const loadPhotos = useCallback(async () => {
     const { data, error } = await supabase
       .from("photos_public")
-      .select("id, uploader_name, storage_path, file_name, created_at")
+      .select("id, uploader_name, storage_path, file_name, category, created_at")
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -131,6 +131,9 @@ function Index() {
         uploader_name: r.uploader_name as string,
         storage_path: r.storage_path as string,
         file_name: r.file_name as string,
+        category: (CATEGORIES as readonly string[]).includes(r.category ?? "")
+          ? (r.category as Category)
+          : "Other",
         created_at: r.created_at as string,
         signedUrl: urls[r.storage_path as string] ?? "",
       })),
