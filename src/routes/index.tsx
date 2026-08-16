@@ -161,11 +161,11 @@ function Index() {
       const optimized = await compressImage(file);
 
       setStage("analyze");
-      let category: Category = "Other";
+      let detected: Category = "Other";
       try {
         const thumb = await makeThumbDataUrl(optimized);
         const res = await categorizePhoto({ data: { dataUrl: thumb } });
-        category = res.category as Category;
+        detected = res.category as Category;
       } catch (aiErr) {
         console.error("[categorize] failed", aiErr);
       }
@@ -185,7 +185,7 @@ function Index() {
         url: path,
         storage_path: path,
         file_name: file.name,
-        category,
+        category: detected,
       });
       if (dbErr) {
         await supabase.storage.from("photos").remove([path]);
