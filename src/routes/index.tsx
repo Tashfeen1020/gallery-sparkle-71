@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { CATEGORIES, dictionaries, LANGS, type Category, type Lang } from "@/lib/i18n";
+import { categoryLabel, dictionaries, LANGS, type Category, type Lang } from "@/lib/i18n";
 import { compressImage, makeThumbDataUrl } from "@/lib/compress";
 import { categorizePhoto } from "@/lib/categorize.functions";
 
@@ -134,9 +134,7 @@ function Index() {
         uploader_name: r.uploader_name as string,
         storage_path: r.storage_path as string,
         file_name: r.file_name as string,
-        category: (CATEGORIES as readonly string[]).includes(r.category ?? "")
-          ? (r.category as Category)
-          : "Other",
+        category: ((r.category as string | null) ?? "").trim() || "Other",
         created_at: r.created_at as string,
         signedUrl: urls[r.storage_path as string] ?? "",
       })),
@@ -167,10 +165,8 @@ function Index() {
         const res = (await categorizePhoto({ data: { dataUrl: thumb } })) as
           | { category?: string; result?: { category?: string } }
           | undefined;
-        const raw = res?.category ?? res?.result?.category;
-        if (raw && (CATEGORIES as readonly string[]).includes(raw)) {
-          detected = raw as Category;
-        }
+        const raw = (res?.category ?? res?.result?.category ?? "").trim();
+        if (raw) detected = raw;
       } catch (aiErr) {
         console.error("[categorize] failed", aiErr);
       }
@@ -269,10 +265,17 @@ function Index() {
     });
   }, [photos, search, favOnly, favourites, category]);
 
-  const usedCategories = useMemo(
-    () => CATEGORIES.filter((c) => photos.some((p) => p.category === c)),
-    [photos],
-  );
+  const usedCategories = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const p of photos) counts.set(p.category, (counts.get(p.category) ?? 0) + 1);
+    return [...counts.entries()]
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .map(([c]) => c);
+  }, [photos]);
+
+  useEffect(() => {
+    if (category !== "All" && !usedCategories.includes(category)) setCategory("All");
+  }, [usedCategories, category]);
 
   return (
     <main className="app-backdrop min-h-screen" dir={rtl ? "rtl" : "ltr"}>
@@ -432,7 +435,7 @@ function Index() {
                   : "border-border bg-input text-muted-foreground hover:border-primary hover:text-primary"
               }`}
             >
-              {c === "All" ? t.allCategories : t.categoryNames[c as Category]}
+              {c === "All" ? t.allCategories : categoryLabel(lang, c)}
             </button>
           ))}
         </div>
@@ -464,7 +467,7 @@ function Index() {
                     className="aspect-[4/3] w-full object-cover transition duration-300 group-hover:scale-105"
                   />
                   <span className="absolute left-2 top-2 rounded-full bg-background/75 px-2.5 py-1 text-[11px] font-semibold backdrop-blur">
-                    {t.categoryNames[p.category]}
+                    {categoryLabel(lang, p.category)}
                   </span>
                   <span className="absolute inset-0 grid place-items-center bg-background/55 text-sm font-semibold opacity-0 backdrop-blur-[2px] transition group-hover:opacity-100">
                     🔎 {t.viewPhoto}
@@ -540,7 +543,7 @@ function Index() {
               <div className="min-w-0">
                 <p className="font-display text-xl font-bold">{lightbox.uploader_name}</p>
                 <p className="truncate text-sm text-muted-foreground">
-                  {lightbox.file_name} · {t.categoryNames[lightbox.category]} ·{" "}
+                  {lightbox.file_name} · {categoryLabel(lang, lightbox.category)} ·{" "}
                   {new Date(lightbox.created_at).toLocaleDateString(
                     lang === "bn" ? "bn-BD" : lang === "ar" ? "ar-EG" : "en-US",
                   )}
