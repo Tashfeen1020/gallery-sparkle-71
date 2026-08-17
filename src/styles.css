@@ -133,53 +133,66 @@
 @utility app-backdrop {
   position: relative;
   isolation: isolate;
-  background:
-    radial-gradient(900px 500px at 10% -10%, color-mix(in oklab, var(--primary) 45%, transparent), transparent 60%),
-    radial-gradient(800px 500px at 100% 0%, color-mix(in oklab, var(--cyan) 30%, transparent), transparent 55%),
-    var(--background);
-  transition: background-color 0.5s ease;
+  background-color: transparent;
 }
 
-.light .app-backdrop {
-  background:
-    radial-gradient(900px 500px at 10% -10%, color-mix(in oklab, var(--primary) 14%, transparent), transparent 60%),
-    radial-gradient(800px 500px at 100% 0%, color-mix(in oklab, var(--cyan) 16%, transparent), transparent 55%),
-    var(--background);
-}
-
-/* Ambient animated layer: drifting particles (dark) / pastel waves (light) */
+/* Ambient animated layer: animated gradient + drifting blobs */
 @utility fx-ambient {
   position: fixed;
   inset: 0;
-  z-index: -1;
+  z-index: -2;
   pointer-events: none;
   overflow: hidden;
   opacity: 0.9;
 }
 
-/* Three-colour animated blobs. Dark: brown / navy / green. Light: sky / pink / white. */
+/* Three-colour animated gradient. Dark: brown / navy / green. Light: pink / blue / white. */
 :root {
-  --fx-1: oklch(0.33 0.06 55); /* dark brown */
-  --fx-2: oklch(0.3 0.1 265); /* navy blue */
-  --fx-3: oklch(0.32 0.08 155); /* dark green */
+  --fx-1: oklch(0.4 0.12 55); /* dark brown */
+  --fx-2: oklch(0.35 0.18 265); /* navy blue */
+  --fx-3: oklch(0.38 0.14 155); /* dark green */
 }
 
 .light {
-  --fx-1: oklch(0.88 0.07 230); /* light sky blue */
-  --fx-2: oklch(0.9 0.06 350); /* baby pink */
-  --fx-3: oklch(1 0 0); /* white */
+  --fx-1: oklch(0.83 0.16 230); /* light sky blue */
+  --fx-2: oklch(0.86 0.18 355); /* light pink */
+  --fx-3: oklch(1 0 0); /* pure white */
 }
+
+@utility fx-gradient {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background: linear-gradient(
+    120deg,
+    var(--fx-1) 0%,
+    var(--fx-2) 22%,
+    var(--fx-3) 50%,
+    var(--fx-2) 78%,
+    var(--fx-1) 100%
+  );
+  background-size: 400% 400%;
+  animation: fx-gradient-shift 2s ease-in-out infinite;
+  filter: blur(60px);
+  opacity: 0.95;
+}
+
+.light .fx-gradient {
+  opacity: 0.75;
+}
+
 
 @utility fx-blob {
   position: absolute;
-  width: 70vmax;
-  height: 70vmax;
+  width: 65vmax;
+  height: 65vmax;
   border-radius: 50%;
   filter: blur(80px);
-  opacity: 0.75;
+  opacity: 0.7;
   will-change: transform;
   animation: fx-float 2s ease-in-out infinite;
 }
+
 
 .fx-blob-1 {
   top: -18%;
@@ -192,7 +205,6 @@
   right: -18%;
   background: radial-gradient(circle, var(--fx-2), transparent 68%);
   animation-delay: -0.7s;
-  animation-duration: 2s;
 }
 
 .fx-blob-3 {
@@ -200,27 +212,17 @@
   left: 20%;
   background: radial-gradient(circle, var(--fx-3), transparent 68%);
   animation-delay: -1.4s;
-  animation-duration: 2s;
 }
 
-@utility fx-particles {
-  position: absolute;
-  inset: -20%;
-  background-image:
-    radial-gradient(2px 2px at 20% 30%, color-mix(in oklab, var(--foreground) 55%, transparent), transparent 60%),
-    radial-gradient(2px 2px at 70% 60%, color-mix(in oklab, var(--fx-3) 90%, transparent), transparent 60%),
-    radial-gradient(1.5px 1.5px at 40% 80%, color-mix(in oklab, var(--fx-1) 90%, transparent), transparent 60%),
-    radial-gradient(1.5px 1.5px at 85% 20%, color-mix(in oklab, var(--fx-2) 90%, transparent), transparent 60%);
-  background-size: 320px 320px, 420px 420px, 260px 260px, 380px 380px;
-  animation: fx-drift 2.5s linear infinite;
-}
-
-@keyframes fx-drift {
-  from {
-    transform: translate3d(0, 0, 0);
+@keyframes fx-gradient-shift {
+  0% {
+    background-position: 0% 50%;
   }
-  to {
-    transform: translate3d(-80px, -110px, 0);
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
   }
 }
 
@@ -230,16 +232,17 @@
     transform: translate3d(0, 0, 0) scale(1);
   }
   50% {
-    transform: translate3d(4%, -6%, 0) scale(1.12);
+    transform: translate3d(6%, -8%, 0) scale(1.18);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .fx-particles,
+  .fx-gradient,
   .fx-blob {
     animation: none;
   }
 }
+
 
 
 @utility text-gradient {
