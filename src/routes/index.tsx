@@ -280,10 +280,10 @@ function Index() {
   return (
     <main className="app-backdrop min-h-screen" dir={rtl ? "rtl" : "ltr"}>
       <div className="fx-ambient" aria-hidden="true">
+        <div className="fx-gradient" />
         <div className="fx-blob fx-blob-1" />
         <div className="fx-blob fx-blob-2" />
         <div className="fx-blob fx-blob-3" />
-        {theme === "dark" && <div className="fx-particles" />}
       </div>
 
       <div className="mx-auto max-w-6xl px-4 pb-24 pt-8">
