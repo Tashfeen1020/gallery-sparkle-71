@@ -2,16 +2,25 @@ export type Lang = "en" | "bn" | "ar";
 
 export const CATEGORIES = [
   "Cars",
+  "Planes",
   "Nature",
   "People",
   "Animals",
   "Food",
   "Architecture",
+  "Tech",
+  "Sports",
+  "Travel",
   "Art",
   "Other",
 ] as const;
 
-export type Category = (typeof CATEGORIES)[number];
+/** Categories are dynamic: the AI may return a label outside the list above. */
+export type Category = string;
+
+export function categoryLabel(lang: Lang, c: string): string {
+  return dictionaries[lang].categoryNames[c] ?? c;
+}
 
 export const LANGS: { code: Lang; label: string }[] = [
   { code: "en", label: "English" },
@@ -58,7 +67,7 @@ export type Dict = {
   compressing: string;
   analyzing: string;
   uploadedBy: string;
-  categoryNames: Record<Category, string>;
+  categoryNames: Record<string, string>;
 };
 
 export const dictionaries: Record<Lang, Dict> = {
@@ -104,6 +113,10 @@ export const dictionaries: Record<Lang, Dict> = {
     uploadedBy: "Uploaded by",
     categoryNames: {
       Cars: "Cars",
+      Planes: "Planes",
+      Tech: "Tech",
+      Sports: "Sports",
+      Travel: "Travel",
       Nature: "Nature",
       People: "People",
       Animals: "Animals",
@@ -155,6 +168,10 @@ export const dictionaries: Record<Lang, Dict> = {
     uploadedBy: "আপলোড করেছেন",
     categoryNames: {
       Cars: "গাড়ি",
+      Planes: "উড়োজাহাজ",
+      Tech: "প্রযুক্তি",
+      Sports: "খেলাধুলা",
+      Travel: "ভ্রমণ",
       Nature: "প্রকৃতি",
       People: "মানুষ",
       Animals: "প্রাণী",
@@ -206,6 +223,10 @@ export const dictionaries: Record<Lang, Dict> = {
     uploadedBy: "رفعها",
     categoryNames: {
       Cars: "سيارات",
+      Planes: "طائرات",
+      Tech: "تقنية",
+      Sports: "رياضة",
+      Travel: "سفر",
       Nature: "طبيعة",
       People: "أشخاص",
       Animals: "حيوانات",

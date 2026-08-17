@@ -17,9 +17,10 @@ export async function detectCategory(dataUrl: string): Promise<Category> {
       messages: [
         {
           role: "system",
-          content: `Classify the photo into exactly one of these categories: ${CATEGORIES.join(
-            ", ",
-          )}. Answer with the single category word only, nothing else.`,
+          content: `You are an image classifier. Identify the main subject of the photo and answer with ONE short English category label in Title Case (one or two words max).
+Prefer one of these when it fits: ${CATEGORIES.filter((c) => c !== "Other").join(", ")}.
+If none fits, invent a concise, generic category (e.g. Boats, Flowers, Space, Fashion, Music, Interiors).
+Answer with the label only, no punctuation, no explanation.`,
         },
         {
           role: "user",
@@ -41,7 +42,45 @@ export async function detectCategory(dataUrl: string): Promise<Category> {
   const json = (await res.json()) as {
     choices?: { message?: { content?: string } }[];
   };
-  const raw = (json.choices?.[0]?.message?.content ?? "").trim().toLowerCase();
-  const match = CATEGORIES.find((c) => raw.includes(c.toLowerCase()));
-  return match ?? "Other";
+  const raw = (json.choices?.[0]?.message?.content ?? "")
+    .replace(/[^\p{L}\s-]/gu, " ")
+    .trim();
+  if (!raw) return "Other";
+
+  const known = CATEGORIES.find((c) => raw.toLowerCase().includes(c.toLowerCase()));
+  if (known) return known;
+
+  const alias: Record<string, string> = {
+    aviation: "Planes",
+    airplane: "Planes",
+    aeroplane: "Planes",
+    plane: "Planes",
+    aircraft: "Planes",
+    jet: "Planes",
+    car: "Cars",
+    vehicle: "Cars",
+    automobile: "Cars",
+    animal: "Animals",
+    pet: "Animals",
+    person: "People",
+    portrait: "People",
+    building: "Architecture",
+    technology: "Tech",
+    gadget: "Tech",
+    computer: "Tech",
+    sport: "Sports",
+    landscape: "Nature",
+  };
+  const lower = raw.toLowerCase();
+  for (const [k, v] of Object.entries(alias)) {
+    if (lower.includes(k)) return v;
+  }
+
+  const label = raw
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(" ")
+    .slice(0, 24);
+  return label || "Other";
 }
