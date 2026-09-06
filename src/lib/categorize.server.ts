@@ -48,8 +48,17 @@ Answer with the label only, no punctuation, no explanation.`,
     .trim();
   if (!raw) return "Other";
 
-  const known = CATEGORIES.find((c) => raw.toLowerCase().includes(c.toLowerCase()));
+  // Exact match to a standard category wins; multi-word answers stay as sub-categories.
+  const known = CATEGORIES.find((c) => raw.toLowerCase() === c.toLowerCase());
   if (known) return known;
+  if (/\s/.test(raw)) {
+    return raw
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(" ")
+      .slice(0, 24);
+  }
 
   const alias: Record<string, string> = {
     aviation: "Planes",
