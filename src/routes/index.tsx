@@ -461,14 +461,14 @@ function Index() {
               }`}
             >
               {c === "All" ? t.allCategories : categoryLabel(lang, c)}
-              <span
-                className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${
-                  category === c ? "bg-background/25" : "bg-background/60"
-                }`}
-                title={`${n} ${t.photosCount}`}
-              >
-                {n}
-              </span>
+              {category === c && (
+                <span
+                  className="rounded-full bg-background/25 px-2 py-0.5 text-[11px] font-bold"
+                  title={`${n} ${t.photosCount}`}
+                >
+                  {n}
+                </span>
+              )}
             </button>
           ))}
         </div>
