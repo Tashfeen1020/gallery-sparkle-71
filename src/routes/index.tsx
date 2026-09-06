@@ -75,6 +75,9 @@ function Index() {
   const [stage, setStage] = useState<"compress" | "analyze" | "upload">("upload");
   const [category, setCategory] = useState<Category | "All">("All");
   const [lightbox, setLightbox] = useState<Photo | null>(null);
+  const [orientation, setOrientation] = useState<"All" | "landscape" | "portrait">("All");
+  const [ratios, setRatios] = useState<Record<string, "landscape" | "portrait">>({});
+  const [thanks, setThanks] = useState(false);
 
   const t = dictionaries[lang];
   const rtl = lang === "ar";
@@ -141,6 +144,26 @@ function Index() {
     );
     setLoading(false);
   }, [notify, lang]);
+
+  useEffect(() => {
+    let cancelled = false;
+    for (const p of photos) {
+      if (!p.signedUrl || ratios[p.id]) continue;
+      const img = new Image();
+      img.onload = () => {
+        if (cancelled) return;
+        setRatios((r) => ({
+          ...r,
+          [p.id]: img.naturalWidth >= img.naturalHeight ? "landscape" : "portrait",
+        }));
+      };
+      img.src = p.signedUrl;
+    }
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [photos]);
 
   useEffect(() => {
     void loadPhotos();
@@ -241,7 +264,8 @@ function Index() {
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-      notify(t.saved);
+      setThanks(true);
+      setTimeout(() => setThanks(false), 2600);
     } catch (err) {
       notify(t.saveFailed((err as Error).message), true);
     }
@@ -260,22 +284,23 @@ function Index() {
     return photos.filter((p) => {
       if (favOnly && !favourites.includes(p.id)) return false;
       if (category !== "All" && p.category !== category) return false;
+      if (orientation !== "All" && ratios[p.id] !== orientation) return false;
       if (!term) return true;
       return `${p.uploader_name} ${p.file_name}`.toLowerCase().includes(term);
     });
-  }, [photos, search, favOnly, favourites, category]);
+  }, [photos, search, favOnly, favourites, category, orientation, ratios]);
 
   const usedCategories = useMemo(() => {
     const counts = new Map<string, number>();
     for (const p of photos) counts.set(p.category, (counts.get(p.category) ?? 0) + 1);
-    return [...counts.entries()]
-      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-      .map(([c]) => c);
+    return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
   }, [photos]);
 
+  const categoryNames = useMemo(() => usedCategories.map(([c]) => c), [usedCategories]);
+
   useEffect(() => {
-    if (category !== "All" && !usedCategories.includes(category)) setCategory("All");
-  }, [usedCategories, category]);
+    if (category !== "All" && !categoryNames.includes(category)) setCategory("All");
+  }, [categoryNames, category]);
 
   return (
     <main className="app-backdrop min-h-screen" dir={rtl ? "rtl" : "ltr"}>
@@ -423,19 +448,53 @@ function Index() {
           </button>
         </div>
 
-        <div className="mb-6 flex flex-wrap gap-2">
-          {(["All", ...usedCategories] as const).map((c) => (
+        <div className="mb-4 flex flex-wrap gap-2">
+          {([["All", photos.length], ...usedCategories] as [string, number][]).map(([c, n]) => (
             <button
               key={c}
               type="button"
               onClick={() => setCategory(c as Category | "All")}
-              className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+              className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${
                 category === c
                   ? "border-transparent bg-primary text-primary-foreground"
                   : "border-border bg-input text-muted-foreground hover:border-primary hover:text-primary"
               }`}
             >
               {c === "All" ? t.allCategories : categoryLabel(lang, c)}
+              <span
+                className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                  category === c ? "bg-background/25" : "bg-background/60"
+                }`}
+                title={`${n} ${t.photosCount}`}
+              >
+                {n}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        <div className="mb-6 flex flex-wrap items-center gap-2">
+          <span className="text-xs uppercase tracking-wider text-muted-foreground">
+            {t.orientation}
+          </span>
+          {(
+            [
+              ["All", t.allCategories, "▦"],
+              ["landscape", t.landscape, "▭"],
+              ["portrait", t.portrait, "▯"],
+            ] as const
+          ).map(([key, label, icon]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setOrientation(key)}
+              className={`rounded-full border px-4 py-1.5 text-sm font-semibold transition ${
+                orientation === key
+                  ? "border-transparent bg-gold text-background"
+                  : "border-border bg-input text-muted-foreground hover:border-primary hover:text-primary"
+              }`}
+            >
+              {icon} {label}
             </button>
           ))}
         </div>
@@ -565,6 +624,22 @@ function Index() {
                   {t.close}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {thanks && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="pointer-events-none fixed inset-x-0 top-6 z-[60] grid place-items-center px-4"
+        >
+          <div className="thanks-pop flex items-center gap-3 rounded-2xl border border-gold/60 bg-card/95 px-6 py-4 shadow-2xl backdrop-blur">
+            <span className="thanks-emoji text-2xl">🎉</span>
+            <div>
+              <p className="font-display text-base font-bold text-gradient">{t.thanksTitle}</p>
+              <p className="text-xs text-muted-foreground">{t.thanksBody}</p>
             </div>
           </div>
         </div>

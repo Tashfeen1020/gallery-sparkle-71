@@ -67,6 +67,12 @@ export type Dict = {
   compressing: string;
   analyzing: string;
   uploadedBy: string;
+  orientation: string;
+  landscape: string;
+  portrait: string;
+  photosCount: string;
+  thanksTitle: string;
+  thanksBody: string;
   categoryNames: Record<string, string>;
 };
 
@@ -111,6 +117,12 @@ export const dictionaries: Record<Lang, Dict> = {
     compressing: "Compressing image…",
     analyzing: "AI is analysing…",
     uploadedBy: "Uploaded by",
+    orientation: "Orientation",
+    landscape: "Landscape",
+    portrait: "Portrait",
+    photosCount: "photos",
+    thanksTitle: "Thanks for downloading!",
+    thanksBody: "Your photo is saved to your device. Enjoy!",
     categoryNames: {
       Cars: "Cars",
       Planes: "Planes",
@@ -166,6 +178,12 @@ export const dictionaries: Record<Lang, Dict> = {
     compressing: "ছবি সংকুচিত হচ্ছে…",
     analyzing: "এআই বিশ্লেষণ করছে…",
     uploadedBy: "আপলোড করেছেন",
+    orientation: "অভিমুখ",
+    landscape: "ল্যান্ডস্কেপ",
+    portrait: "পোর্ট্রেট",
+    photosCount: "ছবি",
+    thanksTitle: "ডাউনলোডের জন্য ধন্যবাদ!",
+    thanksBody: "ছবিটি আপনার ডিভাইসে সংরক্ষিত হয়েছে। উপভোগ করুন!",
     categoryNames: {
       Cars: "গাড়ি",
       Planes: "উড়োজাহাজ",
@@ -221,6 +239,12 @@ export const dictionaries: Record<Lang, Dict> = {
     compressing: "جارٍ ضغط الصورة…",
     analyzing: "تحليل الذكاء الاصطناعي…",
     uploadedBy: "رفعها",
+    orientation: "الاتجاه",
+    landscape: "أفقي",
+    portrait: "عمودي",
+    photosCount: "صور",
+    thanksTitle: "شكرًا للتنزيل!",
+    thanksBody: "تم حفظ الصورة على جهازك. استمتع!",
     categoryNames: {
       Cars: "سيارات",
       Planes: "طائرات",

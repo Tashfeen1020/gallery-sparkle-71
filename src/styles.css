@@ -310,3 +310,38 @@
     font-family: var(--font-sans);
   }
 }
+
+/* Animated "thanks for downloading" popup */
+@keyframes thanks-pop-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-24px) scale(0.9);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(4px) scale(1.04);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes thanks-bounce {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-8deg);
+  }
+  50% {
+    transform: translateY(-6px) rotate(8deg);
+  }
+}
+
+@utility thanks-pop {
+  animation: thanks-pop-in 0.45s cubic-bezier(0.2, 1.2, 0.4, 1) both;
+}
+
+@utility thanks-emoji {
+  display: inline-block;
+  animation: thanks-bounce 0.8s ease-in-out infinite;
+}

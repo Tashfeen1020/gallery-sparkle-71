@@ -17,9 +17,10 @@ export async function detectCategory(dataUrl: string): Promise<Category> {
       messages: [
         {
           role: "system",
-          content: `You are an image classifier. Identify the main subject of the photo and answer with ONE short English category label in Title Case (one or two words max).
-Prefer one of these when it fits: ${CATEGORIES.filter((c) => c !== "Other").join(", ")}.
-If none fits, invent a concise, generic category (e.g. Boats, Flowers, Space, Fashion, Music, Interiors).
+          content: `You are a precise image classifier. Identify the main subject of the photo and answer with ONE short, highly relevant English category label in Title Case (one or two words max).
+Prefer one of these standard categories when the photo clearly fits: ${CATEGORIES.filter((c) => c !== "Other").join(", ")}.
+Prefer a more specific sub-category when the subject is clearly a recognisable kind, e.g. Sports Cars, Fighter Jets, Wild Animals, Street Food, Mountains, Beaches, Night Sky, Skyscrapers, Portraits, Pets, Desserts, Motorbikes, Boats, Flowers.
+If nothing fits, invent a concise, generic new category of your own.
 Answer with the label only, no punctuation, no explanation.`,
         },
         {
@@ -47,8 +48,17 @@ Answer with the label only, no punctuation, no explanation.`,
     .trim();
   if (!raw) return "Other";
 
-  const known = CATEGORIES.find((c) => raw.toLowerCase().includes(c.toLowerCase()));
+  // Exact match to a standard category wins; multi-word answers stay as sub-categories.
+  const known = CATEGORIES.find((c) => raw.toLowerCase() === c.toLowerCase());
   if (known) return known;
+  if (/\s/.test(raw)) {
+    return raw
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(" ")
+      .slice(0, 24);
+  }
 
   const alias: Record<string, string> = {
     aviation: "Planes",
