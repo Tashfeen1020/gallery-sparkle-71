@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1788794372629,
+      "tag": "0000_add_photo_description_and_ratings",
+      "breakpoints": true
+    }
+  ]
+}
