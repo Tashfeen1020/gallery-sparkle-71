@@ -14,10 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      photo_ratings: {
+        Row: {
+          created_at: string
+          id: string
+          photo_id: string
+          stars: number
+          voter_key: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          photo_id: string
+          stars: number
+          voter_key: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          photo_id?: string
+          stars?: number
+          voter_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "photo_ratings_photo_id_fkey"
+            columns: ["photo_id"]
+            isOneToOne: false
+            referencedRelation: "photos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "photo_ratings_photo_id_fkey"
+            columns: ["photo_id"]
+            isOneToOne: false
+            referencedRelation: "photos_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       photos: {
         Row: {
           category: string
           created_at: string
+          description: string
           file_name: string
           id: string
           pin_hash: string
@@ -28,6 +68,7 @@ export type Database = {
         Insert: {
           category?: string
           created_at?: string
+          description?: string
           file_name: string
           id?: string
           pin_hash: string
@@ -38,6 +79,7 @@ export type Database = {
         Update: {
           category?: string
           created_at?: string
+          description?: string
           file_name?: string
           id?: string
           pin_hash?: string
@@ -53,6 +95,7 @@ export type Database = {
         Row: {
           category: string | null
           created_at: string | null
+          description: string | null
           file_name: string | null
           id: string | null
           storage_path: string | null
@@ -62,6 +105,7 @@ export type Database = {
         Insert: {
           category?: string | null
           created_at?: string | null
+          description?: string | null
           file_name?: string | null
           id?: string | null
           storage_path?: string | null
@@ -71,6 +115,7 @@ export type Database = {
         Update: {
           category?: string | null
           created_at?: string | null
+          description?: string | null
           file_name?: string | null
           id?: string | null
           storage_path?: string | null

@@ -71,6 +71,14 @@ export type Dict = {
   landscape: string;
   portrait: string;
   photosCount: string;
+  description: string;
+  descriptionPlaceholder: string;
+  noDescription: string;
+  rating: string;
+  rateStars: (n: number) => string;
+  ratingSaved: string;
+  ratingFailed: (m: string) => string;
+  noRatings: string;
   thanksTitle: string;
   thanksBody: string;
   categoryNames: Record<string, string>;
@@ -123,6 +131,14 @@ export const dictionaries: Record<Lang, Dict> = {
     photosCount: "photos",
     thanksTitle: "Thanks for downloading!",
     thanksBody: "Your photo is saved to your device. Enjoy!",
+    description: "Description",
+    descriptionPlaceholder: "Say something about this photo…",
+    noDescription: "No description",
+    rating: "Rating",
+    rateStars: (n) => `Rate ${n} star${n > 1 ? "s" : ""}`,
+    ratingSaved: "Thanks for rating!",
+    ratingFailed: (m) => `Rating failed: ${m}`,
+    noRatings: "Not rated yet",
     categoryNames: {
       Cars: "Cars",
       Planes: "Planes",
@@ -184,6 +200,14 @@ export const dictionaries: Record<Lang, Dict> = {
     photosCount: "ছবি",
     thanksTitle: "ডাউনলোডের জন্য ধন্যবাদ!",
     thanksBody: "ছবিটি আপনার ডিভাইসে সংরক্ষিত হয়েছে। উপভোগ করুন!",
+    description: "বিবরণ",
+    descriptionPlaceholder: "ছবিটি সম্পর্কে কিছু লিখুন…",
+    noDescription: "কোনো বিবরণ নেই",
+    rating: "রেটিং",
+    rateStars: (n) => `${n} স্টার দিন`,
+    ratingSaved: "রেটিং দেওয়ার জন্য ধন্যবাদ!",
+    ratingFailed: (m) => `রেটিং ব্যর্থ: ${m}`,
+    noRatings: "এখনো রেটিং হয়নি",
     categoryNames: {
       Cars: "গাড়ি",
       Planes: "উড়োজাহাজ",
@@ -245,6 +269,14 @@ export const dictionaries: Record<Lang, Dict> = {
     photosCount: "صور",
     thanksTitle: "شكرًا للتنزيل!",
     thanksBody: "تم حفظ الصورة على جهازك. استمتع!",
+    description: "الوصف",
+    descriptionPlaceholder: "اكتب شيئًا عن هذه الصورة…",
+    noDescription: "لا يوجد وصف",
+    rating: "التقييم",
+    rateStars: (n) => `قيّم بـ ${n} نجوم`,
+    ratingSaved: "شكرًا على التقييم!",
+    ratingFailed: (m) => `فشل التقييم: ${m}`,
+    noRatings: "لم يُقيَّم بعد",
     categoryNames: {
       Cars: "سيارات",
       Planes: "طائرات",
