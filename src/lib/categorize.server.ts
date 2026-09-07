@@ -31,7 +31,9 @@ Answer with the label only, no punctuation, no explanation.`,
           ],
         },
       ],
-      max_tokens: 64,
+      // The model spends tokens on internal reasoning first; a small cap
+      // truncates the answer and returns empty content.
+      max_tokens: 512,
     }),
   });
 
@@ -41,9 +43,20 @@ Answer with the label only, no punctuation, no explanation.`,
   }
 
   const json = (await res.json()) as {
-    choices?: { message?: { content?: string } }[];
+    choices?: {
+      message?: { content?: string | { type?: string; text?: string }[] };
+    }[];
   };
-  const raw = (json.choices?.[0]?.message?.content ?? "")
+  const content = json.choices?.[0]?.message?.content;
+  const text =
+    typeof content === "string"
+      ? content
+      : Array.isArray(content)
+        ? content
+            .map((c) => c?.text ?? "")
+            .join(" ")
+        : "";
+  const raw = text
     .replace(/[^\p{L}\s-]/gu, " ")
     .trim();
   if (!raw) return "Other";
