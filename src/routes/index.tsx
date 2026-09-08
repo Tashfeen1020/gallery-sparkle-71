@@ -264,17 +264,36 @@ function Index() {
       const optimized = await compressImage(file);
 
       setStage("analyze");
-      let detected: Category = "Other";
+      const title = `${file.name} ${description}`;
+      const tagMatch = title.match(/#([\p{Lu}][\p{Lu}\p{N}_-]{1,23})\b/u);
+      const hashtag = tagMatch?.[1]
+        ? tagMatch[1]
+            .replace(/[_-]+/g, " ")
+            .trim()
+            .split(/\s+/)
+            .slice(0, 3)
+            .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+            .join(" ")
+            .slice(0, 24)
+        : null;
+      let detected: Category = hashtag ?? "Other";
       try {
         const thumb = await makeThumbDataUrl(optimized);
-        const res = (await categorizePhoto({ data: { dataUrl: thumb } })) as
-          | { category?: string; result?: { category?: string } }
-          | undefined;
+        const res = (await categorizePhoto({
+          data: {
+            dataUrl: thumb,
+            title,
+            existing: Array.from(new Set(photos.map((p) => p.category))).filter(
+              (c) => c && c !== "Other",
+            ),
+          },
+        })) as { category?: string; result?: { category?: string } } | undefined;
         const raw = (res?.category ?? res?.result?.category ?? "").trim();
         if (raw) detected = raw;
       } catch (aiErr) {
         console.error("[categorize] failed", aiErr);
       }
+
 
       setStage("upload");
       const safeName = optimized.name.replace(/[^\w.-]/g, "_");
