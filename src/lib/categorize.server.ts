@@ -14,8 +14,9 @@ function titleCase(raw: string, maxWords = 2): string {
 /** Priority 1: pull a CAPITALIZED hashtag (e.g. "#LANDSCAPE") out of a title/file name. */
 export function hashtagCategory(title: string): string | null {
   const m = title.match(/#([\p{Lu}][\p{Lu}\p{N}_-]{1,23})\b/u);
-  if (!m) return null;
+  if (!m?.[1]) return null;
   const words = m[1].replace(/[_-]+/g, " ").trim();
+
   if (!words) return null;
   return titleCase(words, 3);
 }
