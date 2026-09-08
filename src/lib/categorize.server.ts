@@ -49,10 +49,11 @@ export async function detectCategory(
         {
           role: "system",
           content: `You are a precise image classifier. Identify the main subject of the photo and answer with ONE short, highly relevant English category label in Title Case (one or two words max).
-Prefer one of these standard categories when the photo clearly fits: ${CATEGORIES.filter((c) => c !== "Other").join(", ")}.
+${existing.length ? `FIRST, strongly prefer reusing one of the categories that already exist in this gallery when the photo genuinely belongs there: ${existing.join(", ")}.\n` : ""}Otherwise prefer one of these standard categories when the photo clearly fits: ${CATEGORIES.filter((c) => c !== "Other").join(", ")}.
 Prefer a more specific sub-category when the subject is clearly a recognisable kind, e.g. Sports Cars, Fighter Jets, Wild Animals, Street Food, Mountains, Beaches, Night Sky, Skyscrapers, Portraits, Pets, Desserts, Motorbikes, Boats, Flowers.
-If nothing fits, invent a concise, generic new category of your own.
+If nothing fits, invent a concise, generic new category of your own that best describes the visual content.
 Answer with the label only, no punctuation, no explanation.`,
+
         },
         {
           role: "user",
