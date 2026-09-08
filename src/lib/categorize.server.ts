@@ -2,7 +2,37 @@ import { CATEGORIES, type Category } from "./i18n";
 
 const GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
-export async function detectCategory(dataUrl: string): Promise<Category> {
+function titleCase(raw: string, maxWords = 2): string {
+  return raw
+    .split(/\s+/)
+    .slice(0, maxWords)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(" ")
+    .slice(0, 24);
+}
+
+/** Priority 1: pull a CAPITALIZED hashtag (e.g. "#LANDSCAPE") out of a title/file name. */
+export function hashtagCategory(title: string): string | null {
+  const m = title.match(/#([\p{Lu}][\p{Lu}\p{N}_-]{1,23})\b/u);
+  if (!m) return null;
+  const words = m[1].replace(/[_-]+/g, " ").trim();
+  if (!words) return null;
+  return titleCase(words, 3);
+}
+
+/** Case/spacing-insensitive match against categories already present in the gallery. */
+export function matchExisting(candidate: string, existing: string[]): string | null {
+  const norm = (s: string) => s.toLowerCase().replace(/[\s_-]+/g, "");
+  const c = norm(candidate);
+  if (!c) return null;
+  return existing.find((e) => norm(e) === c) ?? null;
+}
+
+export async function detectCategory(
+  dataUrl: string,
+  existing: string[] = [],
+): Promise<Category> {
+
   const apiKey = process.env["LOVABLE_API_KEY"];
   if (!apiKey) return "Other";
 
