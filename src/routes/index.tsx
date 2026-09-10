@@ -32,7 +32,6 @@ type Photo = {
   storage_path: string;
   file_name: string;
   category: Category;
-  description: string;
   created_at: string;
   signedUrl: string;
 };
@@ -114,7 +113,6 @@ function Index() {
   const [name, setName] = useState("");
   const [pin, setPin] = useState("");
   const [file, setFile] = useState<File | null>(null);
-  const [description, setDescription] = useState("");
   const [ratings, setRatings] = useState<Record<string, { avg: number; count: number }>>({});
   const [myRatings, setMyRatings] = useState<Record<string, number>>({});
   const [fileKey, setFileKey] = useState(0);
@@ -190,7 +188,7 @@ function Index() {
   const loadPhotos = useCallback(async () => {
     const { data, error } = await supabase
       .from("photos_public")
-      .select("id, uploader_name, storage_path, file_name, category, description, created_at")
+      .select("id, uploader_name, storage_path, file_name, category, created_at")
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -218,7 +216,6 @@ function Index() {
         storage_path: r.storage_path as string,
         file_name: r.file_name as string,
         category: ((r.category as string | null) ?? "").trim() || "Other",
-        description: (r.description as string | null) ?? "",
         created_at: r.created_at as string,
         signedUrl: urls[r.storage_path as string] ?? "",
       })),
@@ -264,7 +261,7 @@ function Index() {
       const optimized = await compressImage(file);
 
       setStage("analyze");
-      const title = `${file.name} ${description}`;
+      const title = file.name;
       const tagMatch = title.match(/#([\p{Lu}][\p{Lu}\p{N}_-]{1,23})\b/u);
       const hashtag = tagMatch?.[1]
         ? tagMatch[1]
@@ -311,7 +308,6 @@ function Index() {
         storage_path: path,
         file_name: file.name,
         category: detected,
-        description: description.trim(),
       });
       if (dbErr) {
         await supabase.storage.from("photos").remove([path]);
@@ -320,7 +316,6 @@ function Index() {
 
       setName("");
       setPin("");
-      setDescription("");
       setFile(null);
       setFileKey((k) => k + 1);
       notify(t.uploaded);
@@ -389,7 +384,7 @@ function Index() {
       if (category !== "All" && p.category !== category) return false;
       if (orientation !== "All" && ratios[p.id] !== orientation) return false;
       if (!term) return true;
-      return `${p.uploader_name} ${p.file_name} ${p.description}`.toLowerCase().includes(term);
+      return `${p.uploader_name} ${p.file_name}`.toLowerCase().includes(term);
     });
   }, [photos, search, favOnly, favourites, category, orientation, ratios]);
 
@@ -497,23 +492,6 @@ function Index() {
                 onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
                 placeholder="••••"
                 className="rounded-xl border border-border bg-input px-3.5 py-3 tracking-[0.4em] text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-ring/40"
-              />
-            </div>
-
-            <div className="grid gap-1.5 sm:col-span-2 lg:col-span-3">
-              <label
-                htmlFor="description"
-                className="text-xs uppercase tracking-wider text-muted-foreground"
-              >
-                {t.description}
-              </label>
-              <input
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                maxLength={160}
-                placeholder={t.descriptionPlaceholder}
-                className="rounded-xl border border-border bg-input px-3.5 py-3 text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-ring/40"
               />
             </div>
 
@@ -653,9 +631,6 @@ function Index() {
                   </span>
                 </button>
                 <div className="space-y-2 p-3">
-                  <p className={`line-clamp-2 text-xs ${p.description ? "text-foreground/80" : "text-muted-foreground/70 italic"}`}>
-                    {p.description || t.noDescription}
-                  </p>
                   <div className="flex items-center gap-2">
                     <Stars
                       value={myRatings[p.id] ?? Math.round(ratings[p.id]?.avg ?? 0)}
@@ -742,11 +717,6 @@ function Index() {
                   {lightbox.file_name} · {categoryLabel(lang, lightbox.category)} ·{" "}
                   {new Date(lightbox.created_at).toLocaleDateString(
                     lang === "bn" ? "bn-BD" : lang === "ar" ? "ar-EG" : "en-US",
-                  )}
-                </p>
-                <p className="mt-1 text-sm">
-                  {lightbox.description || (
-                    <span className="italic text-muted-foreground">{t.noDescription}</span>
                   )}
                 </p>
                 <div className="mt-2 flex items-center gap-2">
