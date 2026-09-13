@@ -64,6 +64,8 @@ export type Dict = {
   viewPhoto: string;
   close: string;
   allCategories: string;
+  categories: string;
+  hideCategories: string;
   compressing: string;
   analyzing: string;
   uploadedBy: string;
@@ -89,8 +91,8 @@ export const dictionaries: Record<Lang, Dict> = {
     title: "Pixel Vault",
     tagline:
       "Upload a photo with your name and a 4-digit PIN. Anyone can view — only the PIN can delete.",
-    uploaderName: "Uploader name",
-    namePlaceholder: "Jane Doe",
+    uploaderName: "PHOTO NAME",
+    namePlaceholder: "Sunset by the sea",
     photo: "Photo",
     secretPin: "Secret PIN",
     upload: "Upload photo",
@@ -122,6 +124,8 @@ export const dictionaries: Record<Lang, Dict> = {
     viewPhoto: "View photo",
     close: "Close",
     allCategories: "All",
+    categories: "Categories",
+    hideCategories: "Hide categories",
     compressing: "Compressing image…",
     analyzing: "AI is analysing…",
     uploadedBy: "Uploaded by",
@@ -158,8 +162,8 @@ export const dictionaries: Record<Lang, Dict> = {
     title: "পিক্সেল ভল্ট",
     tagline:
       "আপনার নাম ও ৪ সংখ্যার পিন দিয়ে ছবি আপলোড করুন। সবাই দেখতে পারবে — শুধু পিন দিয়েই মুছে ফেলা যাবে।",
-    uploaderName: "আপলোডারের নাম",
-    namePlaceholder: "রহিম উদ্দিন",
+    uploaderName: "ছবির নাম",
+    namePlaceholder: "সমুদ্রের ধারে সূর্যাস্ত",
     photo: "ছবি",
     secretPin: "গোপন পিন",
     upload: "ছবি আপলোড করুন",
@@ -191,6 +195,8 @@ export const dictionaries: Record<Lang, Dict> = {
     viewPhoto: "ছবি দেখুন",
     close: "বন্ধ করুন",
     allCategories: "সব",
+    categories: "ক্যাটাগরি",
+    hideCategories: "ক্যাটাগরি লুকান",
     compressing: "ছবি সংকুচিত হচ্ছে…",
     analyzing: "এআই বিশ্লেষণ করছে…",
     uploadedBy: "আপলোড করেছেন",
@@ -227,8 +233,8 @@ export const dictionaries: Record<Lang, Dict> = {
     title: "خزنة البكسل",
     tagline:
       "ارفع صورة باسمك ورمز PIN من أربعة أرقام. يمكن للجميع المشاهدة — والحذف بالرمز فقط.",
-    uploaderName: "اسم الرافع",
-    namePlaceholder: "محمد أحمد",
+    uploaderName: "اسم الصورة",
+    namePlaceholder: "غروب الشمس عند البحر",
     photo: "الصورة",
     secretPin: "الرمز السري",
     upload: "رفع الصورة",
@@ -260,6 +266,8 @@ export const dictionaries: Record<Lang, Dict> = {
     viewPhoto: "عرض الصورة",
     close: "إغلاق",
     allCategories: "الكل",
+    categories: "الفئات",
+    hideCategories: "إخفاء الفئات",
     compressing: "جارٍ ضغط الصورة…",
     analyzing: "تحليل الذكاء الاصطناعي…",
     uploadedBy: "رفعها",

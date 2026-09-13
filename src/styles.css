@@ -238,7 +238,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .fx-gradient,
-  .fx-blob {
+  .fx-blob,
+  .rgb-search {
     animation: none;
   }
 }
@@ -254,6 +255,31 @@
 
 @utility rainbow-ring {
   background: linear-gradient(90deg, var(--cyan), var(--primary), var(--pink), var(--gold));
+}
+
+@utility rgb-search {
+  background: linear-gradient(
+    90deg,
+    oklch(0.7 0.28 25),
+    oklch(0.85 0.22 145),
+    oklch(0.72 0.2 245),
+    oklch(0.7 0.28 325),
+    oklch(0.7 0.28 25)
+  );
+  background-size: 300% 100%;
+  animation: rgb-search-flow 1.8s linear infinite;
+  box-shadow:
+    0 0 12px color-mix(in oklab, var(--cyan) 55%, transparent),
+    0 0 22px color-mix(in oklab, var(--pink) 35%, transparent);
+}
+
+@keyframes rgb-search-flow {
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: 300% 50%;
+  }
 }
 
 @utility btn-hero {
