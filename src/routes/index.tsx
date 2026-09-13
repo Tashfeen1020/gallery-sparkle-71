@@ -118,6 +118,7 @@ function Index() {
   const [fileKey, setFileKey] = useState(0);
   const [stage, setStage] = useState<"compress" | "analyze" | "upload">("upload");
   const [category, setCategory] = useState<Category | "All">("All");
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [lightbox, setLightbox] = useState<Photo | null>(null);
   const [orientation, setOrientation] = useState<"All" | "landscape" | "portrait">("All");
   const [ratios, setRatios] = useState<Record<string, "landscape" | "portrait">>({});
@@ -409,8 +410,8 @@ function Index() {
         <div className="fx-blob fx-blob-3" />
       </div>
 
-      <div className="mx-auto max-w-6xl px-4 pb-24 pt-8">
-        <div className="mb-4 flex items-center justify-end gap-2">
+      <div className="mx-auto max-w-7xl px-3 pb-16 pt-4 sm:px-6 sm:pb-24 sm:pt-8 lg:px-8">
+        <div className="mb-4 flex items-center justify-end gap-2 sm:mb-5">
           <label className="sr-only" htmlFor="lang">
             {t.language}
           </label>
@@ -419,7 +420,7 @@ function Index() {
             value={lang}
             onChange={(e) => setLang(e.target.value as Lang)}
             aria-label={t.language}
-            className="rounded-full border border-border bg-input px-4 py-2 text-sm text-foreground outline-none focus:border-primary"
+            className="h-10 max-w-[10rem] rounded-full border border-border bg-input px-3 text-sm text-foreground outline-none focus:border-primary sm:max-w-none sm:px-4"
           >
             {LANGS.map((l) => (
               <option key={l.code} value={l.code}>
@@ -438,18 +439,18 @@ function Index() {
           </button>
         </div>
 
-        <header className="mb-6 text-center">
-          <h1 className="text-gradient font-display text-4xl font-bold sm:text-5xl">{t.title}</h1>
-          <p className="mx-auto mt-2 max-w-2xl text-muted-foreground">{t.tagline}</p>
+        <header className="mb-5 px-2 text-center sm:mb-7">
+          <h1 className="text-gradient font-display text-4xl font-bold sm:text-5xl lg:text-6xl">{t.title}</h1>
+          <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">{t.tagline}</p>
         </header>
 
-        <section className="rounded-2xl border border-border bg-card p-5 shadow-xl">
+        <section className="rounded-xl border border-border bg-card/95 p-4 shadow-xl backdrop-blur sm:p-5">
           <form
             onSubmit={handleUpload}
-            className="grid items-end gap-4 sm:grid-cols-2 lg:grid-cols-4"
+            className="grid items-end gap-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)_minmax(0,.75fr)_auto]"
           >
             <div className="grid gap-1.5">
-              <label htmlFor="name" className="text-xs uppercase tracking-wider text-muted-foreground">
+              <label htmlFor="name" className="text-xs font-semibold uppercase text-muted-foreground">
                 {t.uploaderName}
               </label>
               <input
@@ -464,7 +465,7 @@ function Index() {
             </div>
 
             <div className="grid gap-1.5">
-              <label htmlFor="file" className="text-xs uppercase tracking-wider text-muted-foreground">
+              <label htmlFor="file" className="text-xs font-semibold uppercase text-muted-foreground">
                 {t.photo}
               </label>
               <input
@@ -474,12 +475,12 @@ function Index() {
                 accept="image/*"
                 required
                 onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                className="rounded-xl border border-border bg-input px-3.5 py-2.5 text-sm text-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-2 file:text-primary-foreground"
+                className="min-w-0 rounded-xl border border-border bg-input px-2.5 py-2.5 text-sm text-foreground file:mr-2 file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-2 file:text-primary-foreground sm:px-3.5"
               />
             </div>
 
             <div className="grid gap-1.5">
-              <label htmlFor="pin" className="text-xs uppercase tracking-wider text-muted-foreground">
+              <label htmlFor="pin" className="text-xs font-semibold uppercase text-muted-foreground">
                 {t.secretPin}
               </label>
               <input
@@ -498,7 +499,7 @@ function Index() {
             <button
               type="submit"
               disabled={uploading}
-              className="btn-hero rounded-xl px-6 py-3 font-semibold transition hover:brightness-110 disabled:opacity-60"
+              className="btn-hero min-h-12 rounded-xl px-6 py-3 font-semibold transition hover:brightness-110 disabled:opacity-60 sm:col-span-2 lg:col-span-1"
             >
               {uploading
                 ? stage === "compress"
@@ -511,9 +512,9 @@ function Index() {
           </form>
         </section>
 
-        <div className="my-7 flex flex-wrap items-center gap-3">
-          <div className="rainbow-ring min-w-[260px] flex-1 rounded-full p-0.5">
-            <div className="relative">
+        <div className="my-5 grid gap-3 sm:my-7 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+          <div className="rgb-search min-w-0 rounded-full p-[3px]">
+            <div className="relative rounded-full bg-input">
               <span
                 className={`pointer-events-none absolute top-1/2 -translate-y-1/2 text-sm ${
                   rtl ? "right-4" : "left-4"
@@ -527,7 +528,7 @@ function Index() {
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={t.searchPlaceholder}
                 aria-label={t.searchPlaceholder}
-                className={`w-full rounded-full bg-input py-3 text-foreground outline-none ${
+                className={`w-full rounded-full bg-transparent py-3 text-foreground outline-none ${
                   rtl ? "pr-10 pl-4" : "pl-10 pr-4"
                 }`}
               />
@@ -536,7 +537,7 @@ function Index() {
           <button
             type="button"
             onClick={() => setFavOnly((v) => !v)}
-            className={`rounded-full border px-5 py-3 font-semibold transition ${
+            className={`w-full rounded-full border px-5 py-3 font-semibold transition sm:w-auto ${
               favOnly
                 ? "border-transparent bg-gold text-background"
                 : "border-border bg-input text-muted-foreground"
@@ -546,33 +547,57 @@ function Index() {
           </button>
         </div>
 
-        <div className="mb-4 flex flex-wrap gap-2">
-          {([["All", photos.length], ...usedCategories] as [string, number][]).map(([c, n]) => (
-            <button
-              key={c}
-              type="button"
-              onClick={() => setCategory(c as Category | "All")}
-              className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                category === c
-                  ? "border-transparent bg-primary text-primary-foreground"
-                  : "border-border bg-input text-muted-foreground hover:border-primary hover:text-primary"
-              }`}
-            >
-              {c === "All" ? t.allCategories : categoryLabel(lang, c)}
-              {category === c && (
-                <span
-                  className="rounded-full bg-background/25 px-2 py-0.5 text-[11px] font-bold"
-                  title={`${n} ${t.photosCount}`}
+        <div className="mb-4">
+          <button
+            type="button"
+            onClick={() => setCategoriesOpen((open) => !open)}
+            aria-expanded={categoriesOpen}
+            aria-controls="category-options"
+            className={`flex min-h-10 w-full items-center justify-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition sm:w-auto ${
+              categoriesOpen
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border bg-input text-foreground hover:border-primary hover:text-primary"
+            }`}
+          >
+            <span aria-hidden="true">▦</span>
+            {categoriesOpen ? t.hideCategories : t.categories}
+            {category !== "All" && (
+              <span className="max-w-36 truncate rounded-full bg-background/20 px-2 py-0.5 text-xs">
+                {categoryLabel(lang, category)}
+              </span>
+            )}
+            <span aria-hidden="true" className={`transition-transform ${categoriesOpen ? "rotate-180" : ""}`}>
+              ⌄
+            </span>
+          </button>
+
+          {categoriesOpen && (
+            <div id="category-options" className="mt-3 flex max-h-36 flex-wrap gap-2 overflow-y-auto rounded-xl border border-border bg-card/90 p-3 backdrop-blur sm:max-h-none">
+              {([["All", photos.length], ...usedCategories] as [string, number][]).map(([c, n]) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setCategory(c as Category | "All")}
+                  className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                    category === c
+                      ? "border-transparent bg-primary text-primary-foreground"
+                      : "border-border bg-input text-muted-foreground hover:border-primary hover:text-primary"
+                  }`}
                 >
-                  {n}
-                </span>
-              )}
-            </button>
-          ))}
+                  {c === "All" ? t.allCategories : categoryLabel(lang, c)}
+                  {category === c && (
+                    <span className="rounded-full bg-background/25 px-2 py-0.5 text-[11px] font-bold" title={`${n} ${t.photosCount}`}>
+                      {n}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-        <div className="mb-6 flex flex-wrap items-center gap-2">
-          <span className="text-xs uppercase tracking-wider text-muted-foreground">
+        <div className="mb-6 flex items-center gap-2 overflow-x-auto pb-1">
+          <span className="shrink-0 text-xs font-semibold uppercase text-muted-foreground">
             {t.orientation}
           </span>
           {(
@@ -586,7 +611,7 @@ function Index() {
               key={key}
               type="button"
               onClick={() => setOrientation(key)}
-              className={`rounded-full border px-4 py-1.5 text-sm font-semibold transition ${
+              className={`shrink-0 rounded-full border px-4 py-1.5 text-sm font-semibold transition ${
                 orientation === key
                   ? "border-transparent bg-gold text-background"
                   : "border-border bg-input text-muted-foreground hover:border-primary hover:text-primary"
@@ -604,11 +629,11 @@ function Index() {
             {photos.length ? t.noMatch : t.empty}
           </p>
         ) : (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
             {visible.map((p) => (
               <article
                 key={p.id}
-                className="overflow-hidden rounded-2xl border border-border bg-card shadow-lg"
+                className="overflow-hidden rounded-xl border border-border bg-card shadow-lg"
               >
                 <button
                   type="button"
@@ -631,7 +656,7 @@ function Index() {
                   </span>
                 </button>
                 <div className="space-y-2 p-3">
-                  <div className="flex items-center gap-2">
+                  <div className="flex min-w-0 items-center gap-2">
                     <Stars
                       value={myRatings[p.id] ?? Math.round(ratings[p.id]?.avg ?? 0)}
                       onRate={(n) => void ratePhoto(p.id, n)}
@@ -639,7 +664,7 @@ function Index() {
                     />
                     <span className="text-[11px] text-muted-foreground">
                       {ratings[p.id]
-                        ? `${ratings[p.id]!.avg.toFixed(1)} (${ratings[p.id]!.count})`
+                        ? `${ratings[p.id]?.avg.toFixed(1)} (${ratings[p.id]?.count})`
                         : t.noRatings}
                     </span>
                   </div>
@@ -652,7 +677,7 @@ function Index() {
                       )}
                     </p>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex shrink-0 gap-1.5">
                     <button
                       type="button"
                       title={t.toggleFavourite}
@@ -699,18 +724,18 @@ function Index() {
           aria-modal="true"
           aria-label={t.viewPhoto}
           onClick={() => setLightbox(null)}
-          className="fixed inset-0 z-50 grid place-items-center bg-background/85 p-4 backdrop-blur-md"
+           className="fixed inset-0 z-50 grid place-items-center bg-background/85 p-2 backdrop-blur-md sm:p-4"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="max-h-[92vh] w-full max-w-4xl overflow-hidden rounded-2xl border border-border bg-card shadow-2xl"
+             className="max-h-[96vh] w-full max-w-4xl overflow-y-auto rounded-xl border border-border bg-card shadow-2xl sm:max-h-[92vh]"
           >
             <img
               src={lightbox.signedUrl}
               alt={t.altPhoto(lightbox.uploader_name)}
-              className="max-h-[70vh] w-full bg-black/40 object-contain"
+               className="max-h-[66vh] w-full bg-background/40 object-contain sm:max-h-[70vh]"
             />
-            <div className="flex flex-wrap items-center justify-between gap-3 p-4">
+             <div className="grid gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
               <div className="min-w-0">
                 <p className="font-display text-xl font-bold">{lightbox.uploader_name}</p>
                 <p className="truncate text-sm text-muted-foreground">
@@ -728,12 +753,12 @@ function Index() {
                   />
                   <span className="text-xs text-muted-foreground">
                     {ratings[lightbox.id]
-                      ? `${ratings[lightbox.id]!.avg.toFixed(1)} (${ratings[lightbox.id]!.count})`
+                       ? `${ratings[lightbox.id]?.avg.toFixed(1)} (${ratings[lightbox.id]?.count})`
                       : t.noRatings}
                   </span>
                 </div>
               </div>
-              <div className="flex gap-2">
+               <div className="grid grid-cols-2 gap-2 sm:flex">
                 <button
                   type="button"
                   onClick={() => void handleSave(lightbox)}
