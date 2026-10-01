@@ -8,6 +8,20 @@
       "when": 1788794372629,
       "tag": "0000_add_photo_description_and_ratings",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790833540117,
+      "tag": "0001_site_settings_and_open_uploads",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790833587880,
+      "tag": "0002_photos_realtime",
+      "breakpoints": true
     }
   ]
 }
