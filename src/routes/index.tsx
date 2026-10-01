@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { categoryLabel, dictionaries, LANGS, type Category, type Lang } from "@/lib/i18n";
 import { compressImage, makeThumbDataUrl } from "@/lib/compress";
 import { categorizePhoto } from "@/lib/categorize.functions";
+import { applyTheme, useSiteSettings } from "@/lib/site-settings";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -12,12 +13,12 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Upload photos with your name and a 4-digit PIN, browse a responsive gallery, favourite and search photos.",
+          "Upload photos, browse a responsive gallery, rate, favourite and search shared photos.",
       },
       { property: "og:title", content: "Pixel Vault — Shared Photo Gallery" },
       {
         property: "og:description",
-        content: "Public photo uploads with PIN-protected delete, favourites and search.",
+        content: "Public photo uploads with smart categories, favourites, ratings and search.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -111,7 +112,8 @@ function Index() {
   const [lang, setLang] = useState<Lang>("en");
 
   const [name, setName] = useState("");
-  const [pin, setPin] = useState("");
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const site = useSiteSettings();
   const [file, setFile] = useState<File | null>(null);
   const [ratings, setRatings] = useState<Record<string, { avg: number; count: number }>>({});
   const [myRatings, setMyRatings] = useState<Record<string, number>>({});
@@ -247,12 +249,25 @@ function Index() {
 
   useEffect(() => {
     void loadPhotos();
+    const channel = supabase
+      .channel("photos-live")
+      .on("postgres_changes", { event: "DELETE", schema: "public", table: "photos" }, (payload) => {
+        const id = (payload.old as { id?: string }).id;
+        if (id) setPhotos((p) => p.filter((x) => x.id !== id));
+      })
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    applyTheme(site);
+  }, [site]);
+
   async function handleUpload(e: React.FormEvent) {
     e.preventDefault();
-    if (!/^\d{4}$/.test(pin)) return notify(t.pinFourDigits, true);
     if (!file) return notify(t.chooseFile, true);
     if (!file.type.startsWith("image/")) return notify(t.onlyImages, true);
 
@@ -304,7 +319,6 @@ function Index() {
 
       const { error: dbErr } = await supabase.from("photos").insert({
         uploader_name: name.trim() || "Anonymous",
-        pin_hash: pin,
         url: path,
         storage_path: path,
         file_name: file.name,
@@ -316,9 +330,9 @@ function Index() {
       }
 
       setName("");
-      setPin("");
       setFile(null);
       setFileKey((k) => k + 1);
+      setUploadOpen(false);
       notify(t.uploaded);
       await loadPhotos();
     } catch (err) {
@@ -326,27 +340,6 @@ function Index() {
     } finally {
       setUploading(false);
     }
-  }
-
-  async function handleDelete(photo: Photo) {
-    const entered = window.prompt(t.pinPrompt);
-    if (entered === null) return;
-    if (!/^\d{4}$/.test(entered.trim())) return notify(t.pinFourDigits, true);
-
-    const { data, error } = await supabase.rpc("delete_photo", {
-      p_id: photo.id,
-      p_pin: entered.trim(),
-    });
-
-    if (error) return notify(t.deleteFailed(error.message), true);
-    if (!data) return notify(t.wrongPin, true);
-
-    const { error: rmErr } = await supabase.storage.from("photos").remove([data as string]);
-    if (rmErr) notify(t.cleanupFailed(rmErr.message), true);
-    else notify(t.deleted);
-
-    setFavourites((f) => f.filter((id) => id !== photo.id));
-    setPhotos((p) => p.filter((x) => x.id !== photo.id));
   }
 
   async function handleSave(photo: Photo) {
@@ -440,14 +433,34 @@ function Index() {
         </div>
 
         <header className="mb-5 px-2 text-center sm:mb-7">
-          <h1 className="text-gradient font-display text-4xl font-bold sm:text-5xl lg:text-6xl">{t.title}</h1>
-          <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">{t.tagline}</p>
+          {site.brandName && (
+            <p className="mb-1 text-xs font-bold uppercase tracking-[0.3em] text-muted-foreground">{site.brandName}</p>
+          )}
+          <h1 className="text-gradient font-display text-4xl font-bold sm:text-5xl lg:text-6xl">{site.title || t.title}</h1>
+          <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">{site.tagline || t.tagline}</p>
         </header>
 
-        <section className="rounded-xl border border-border bg-card/95 p-4 shadow-xl backdrop-blur sm:p-5">
+        <div className="flex justify-center">
+          <button
+            type="button"
+            onClick={() => setUploadOpen((v) => !v)}
+            aria-expanded={uploadOpen}
+            aria-controls="upload-form"
+            title={site.uploadLabel || t.upload}
+            aria-label={site.uploadLabel || t.upload}
+            className={`btn-hero grid h-14 w-14 place-items-center rounded-full text-2xl shadow-xl transition duration-300 hover:scale-110 ${
+              uploadOpen ? "rotate-45" : ""
+            }`}
+          >
+            +
+          </button>
+        </div>
+
+        {uploadOpen && (
+        <section id="upload-form" className="thanks-pop mt-4 rounded-xl border border-border bg-card/95 p-4 shadow-xl backdrop-blur sm:p-5">
           <form
             onSubmit={handleUpload}
-            className="grid items-end gap-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)_minmax(0,.75fr)_auto]"
+            className="grid items-end gap-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)_auto]"
           >
             <div className="grid gap-1.5">
               <label htmlFor="name" className="text-xs font-semibold uppercase text-muted-foreground">
@@ -479,23 +492,6 @@ function Index() {
               />
             </div>
 
-            <div className="grid gap-1.5">
-              <label htmlFor="pin" className="text-xs font-semibold uppercase text-muted-foreground">
-                {t.secretPin}
-              </label>
-              <input
-                id="pin"
-                type="password"
-                inputMode="numeric"
-                maxLength={4}
-                required
-                value={pin}
-                onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
-                placeholder="••••"
-                className="rounded-xl border border-border bg-input px-3.5 py-3 tracking-[0.4em] text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-ring/40"
-              />
-            </div>
-
             <button
               type="submit"
               disabled={uploading}
@@ -507,10 +503,11 @@ function Index() {
                   : stage === "analyze"
                     ? t.analyzing
                     : t.uploading
-                : t.upload}
+                : site.uploadLabel || t.upload}
             </button>
           </form>
         </section>
+        )}
 
         <div className="my-5 grid gap-3 sm:my-7 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
           <div className="rgb-search min-w-0 rounded-full p-[3px]">
@@ -700,21 +697,15 @@ function Index() {
                     >
                       ⬇
                     </button>
-                    <button
-                      type="button"
-                      title={t.deletePhoto}
-                      aria-label={t.deletePhoto}
-                      onClick={() => void handleDelete(p)}
-                      className="grid h-9 w-9 place-items-center rounded-xl border border-border bg-input transition hover:border-destructive hover:text-destructive"
-                    >
-                      🗑
-                    </button>
                   </div>
                 </div>
                 </div>
               </article>
             ))}
           </div>
+        )}
+        {site.footerText && (
+          <footer className="mt-10 text-center text-sm text-muted-foreground">{site.footerText}</footer>
         )}
       </div>
 
