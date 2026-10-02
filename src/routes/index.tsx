@@ -445,7 +445,10 @@ function Index() {
         </div>
 
         <header className="mb-4 px-2 text-center sm:mb-5">
-          <h1 className="text-gradient font-display text-4xl font-bold sm:text-5xl lg:text-6xl">
+          <h1
+            className={`${site.titleColor ? "" : "text-gradient"} font-display text-4xl font-bold sm:text-5xl lg:text-6xl`}
+            style={site.titleColor ? { color: site.titleColor } : undefined}
+          >
             {site.title || site.brandName || t.title}
           </h1>
         </header>

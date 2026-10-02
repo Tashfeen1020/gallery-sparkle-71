@@ -371,3 +371,14 @@
   display: inline-block;
   animation: thanks-bounce 0.8s ease-in-out infinite;
 }
+
+/* Admin-controlled overrides */
+.no-fx .fx-ambient {
+  display: none;
+}
+body {
+  font-family: var(--pv-body-font, var(--font-sans));
+}
+.font-display {
+  font-family: var(--pv-title-font, var(--font-display)) !important;
+}

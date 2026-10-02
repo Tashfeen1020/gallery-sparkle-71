@@ -60,10 +60,10 @@ export function applyTheme(s: SiteSettings) {
   }
   if (s.radius) root.setProperty("--radius", `${Number(s.radius) || 14}px`);
   else root.removeProperty("--radius");
-  if (s.titleFont) root.setProperty("--font-display", s.titleFont);
-  else root.removeProperty("--font-display");
-  if (s.bodyFont) root.setProperty("--font-sans", s.bodyFont);
-  else root.removeProperty("--font-sans");
+  if (s.titleFont) root.setProperty("--pv-title-font", s.titleFont);
+  else root.removeProperty("--pv-title-font");
+  if (s.bodyFont) root.setProperty("--pv-body-font", s.bodyFont);
+  else root.removeProperty("--pv-body-font");
   document.documentElement.classList.toggle("no-fx", s.animatedBg === "off");
 }
 
