@@ -79,3 +79,34 @@ export const forceDeletePhoto = createServerFn({ method: "POST" })
     if (row?.storage_path) await supabaseAdmin.storage.from("photos").remove([row.storage_path]);
     return { ok: true };
   });
+
+export const updatePhoto = createServerFn({ method: "POST" })
+  .inputValidator((d) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        uploader_name: z.string().trim().min(1).max(60).optional(),
+        category: z.string().trim().min(1).max(40).optional(),
+        storage_path: z.string().min(1).max(300).optional(),
+        file_name: z.string().min(1).max(200).optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data }) => {
+    await requireAdmin();
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { id, ...patch } = data;
+    const { data: old } = await supabaseAdmin
+      .from("photos")
+      .select("storage_path")
+      .eq("id", id)
+      .maybeSingle();
+    const update: Record<string, string> = { ...patch } as Record<string, string>;
+    if (patch.storage_path) update.url = patch.storage_path;
+    const { error } = await supabaseAdmin.from("photos").update(update).eq("id", id);
+    if (error) throw new Error(error.message);
+    if (patch.storage_path && old?.storage_path && old.storage_path !== patch.storage_path) {
+      await supabaseAdmin.storage.from("photos").remove([old.storage_path]);
+    }
+    return { ok: true };
+  });
