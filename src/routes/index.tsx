@@ -255,6 +255,9 @@ function Index() {
         const id = (payload.old as { id?: string }).id;
         if (id) setPhotos((p) => p.filter((x) => x.id !== id));
       })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "photos" }, () => {
+        void loadPhotos();
+      })
       .subscribe();
     return () => {
       void supabase.removeChannel(channel);
