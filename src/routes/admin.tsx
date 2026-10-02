@@ -7,6 +7,7 @@ import {
   adminLogout,
   adminStatus,
   forceDeletePhoto,
+  updatePhoto,
   publishSettings,
 } from "@/lib/admin.functions";
 import { EMPTY_SETTINGS, normalizeSettings, type SiteSettings } from "@/lib/site-settings";
@@ -96,12 +97,10 @@ function Gate({ onUnlock }: { onUnlock: () => void }) {
   );
 }
 
-type AdminPhoto = { id: string; uploader_name: string; storage_path: string; url: string };
+type AdminPhoto = { id: string; uploader_name: string; storage_path: string; url: string; category: string; file_name: string };
 
 const TEXT_FIELDS: [keyof SiteSettings, string, boolean][] = [
-  ["brandName", "Brand name (header)", false],
-  ["title", "Main title", false],
-  ["tagline", "Description / tagline", true],
+  ["title", "Site name / main title (e.g. Photo Heaven)", false],
   ["uploadLabel", "Upload button text", false],
   ["footerText", "Footer text", true],
 ];
@@ -111,12 +110,30 @@ const COLOR_FIELDS: [keyof SiteSettings, string, string][] = [
   ["foreground", "Text", "#f2f1fa"],
   ["accent", "Accent", "#7c5cff"],
   ["accent2", "Second accent", "#ff4f8b"],
+  ["titleColor", "Title colour (solid)", "#ffffff"],
+  ["cardBg", "Photo box background", "#24223f"],
+  ["cardText", "Photo box text", "#f2f1fa"],
+  ["border", "Box borders", "#3a3760"],
+  ["mutedText", "Small / secondary text", "#a9a6c8"],
+  ["inputBg", "Inputs & buttons", "#1d1c36"],
+  ["starColor", "Stars & favourites", "#f5c542"],
+];
+
+const FONTS = [
+  ["", "Default"],
+  ["Georgia, serif", "Georgia (serif)"],
+  ["'Times New Roman', serif", "Times (serif)"],
+  ["'Trebuchet MS', sans-serif", "Trebuchet"],
+  ["Verdana, sans-serif", "Verdana"],
+  ["'Courier New', monospace", "Courier (mono)"],
+  ["Impact, sans-serif", "Impact"],
 ];
 
 function Dashboard({ onLock }: { onLock: () => void }) {
   const logout = useServerFn(adminLogout);
   const publish = useServerFn(publishSettings);
   const del = useServerFn(forceDeletePhoto);
+  const edit = useServerFn(updatePhoto);
   const [settings, setSettings] = useState<SiteSettings>(EMPTY_SETTINGS);
   const [photos, setPhotos] = useState<AdminPhoto[]>([]);
   const [msg, setMsg] = useState("");
@@ -133,7 +150,7 @@ function Dashboard({ onLock }: { onLock: () => void }) {
   const loadPhotos = useCallback(async () => {
     const { data } = await supabase
       .from("photos_public")
-      .select("id, uploader_name, storage_path")
+      .select("id, uploader_name, storage_path, category, file_name")
       .order("created_at", { ascending: false });
     const rows = data ?? [];
     const paths = rows.map((r) => r.storage_path as string);
@@ -147,6 +164,8 @@ function Dashboard({ onLock }: { onLock: () => void }) {
         uploader_name: r.uploader_name as string,
         storage_path: r.storage_path as string,
         url: urls[r.storage_path as string] ?? "",
+        category: ((r.category as string | null) ?? "Other") || "Other",
+        file_name: (r.file_name as string) ?? "",
       })),
     );
   }, []);
@@ -317,6 +336,47 @@ function Dashboard({ onLock }: { onLock: () => void }) {
       </div>
 
       <section className={card}>
+        <h2 className="mb-3 font-display text-lg font-bold">Layout & Style</h2>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <label className="grid gap-1 text-sm font-semibold">
+            Corner roundness: {settings.radius || "default"}px
+            <input
+              type="range"
+              min={0}
+              max={32}
+              value={Number(settings.radius) || 14}
+              onChange={(e) => setSettings({ ...settings, radius: e.target.value })}
+            />
+          </label>
+          <label className="grid gap-1 text-sm font-semibold">
+            Title font
+            <select value={settings.titleFont} onChange={(e) => setSettings({ ...settings, titleFont: e.target.value })} className={input}>
+              {FONTS.map(([v, l]) => <option key={l} value={v}>{l}</option>)}
+            </select>
+          </label>
+          <label className="grid gap-1 text-sm font-semibold">
+            Body font
+            <select value={settings.bodyFont} onChange={(e) => setSettings({ ...settings, bodyFont: e.target.value })} className={input}>
+              {FONTS.map(([v, l]) => <option key={l} value={v}>{l}</option>)}
+            </select>
+          </label>
+          <label className="grid gap-1 text-sm font-semibold">
+            Animated background
+            <select value={settings.animatedBg} onChange={(e) => setSettings({ ...settings, animatedBg: e.target.value })} className={input}>
+              <option value="">On</option>
+              <option value="off">Off</option>
+            </select>
+          </label>
+        </div>
+        <button
+          onClick={() => setSettings(EMPTY_SETTINGS)}
+          className="mt-4 rounded-xl border border-border bg-input px-4 py-2 text-sm font-semibold hover:text-destructive"
+        >
+          Reset all settings to default
+        </button>
+      </section>
+
+      <section className={card}>
         <h2 className="mb-3 font-display text-lg font-bold">Media & Gallery ({photos.length})</h2>
         <form onSubmit={doUpload} className="mb-4 flex flex-wrap gap-3">
           <input
@@ -333,18 +393,21 @@ function Dashboard({ onLock }: { onLock: () => void }) {
         </form>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           {photos.map((p) => (
-            <div key={p.id} className="overflow-hidden rounded-xl border border-border bg-input">
-              <img src={p.url} alt={p.uploader_name} loading="lazy" className="aspect-square w-full object-cover" />
-              <div className="flex items-center justify-between gap-2 p-2">
-                <span className="truncate text-xs">{p.uploader_name}</span>
-                <button
-                  onClick={() => void doDelete(p.id)}
-                  className="shrink-0 rounded-lg bg-destructive px-2 py-1 text-xs font-semibold text-destructive-foreground"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
+            <PhotoEditor
+              key={p.id}
+              photo={p}
+              categories={[...new Set(photos.map((x) => x.category))]}
+              onDelete={() => void doDelete(p.id)}
+              onSave={async (patch) => {
+                try {
+                  await edit({ data: { id: p.id, ...patch } });
+                  flash("Photo updated");
+                  await loadPhotos();
+                } catch (e) {
+                  flash(`Update failed: ${(e as Error).message}`);
+                }
+              }}
+            />
           ))}
         </div>
       </section>
@@ -354,6 +417,73 @@ function Dashboard({ onLock }: { onLock: () => void }) {
           {msg}
         </div>
       )}
+    </div>
+  );
+}
+
+function PhotoEditor({
+  photo,
+  categories,
+  onDelete,
+  onSave,
+}: {
+  photo: AdminPhoto;
+  categories: string[];
+  onDelete: () => void;
+  onSave: (patch: { uploader_name?: string; category?: string; storage_path?: string; file_name?: string }) => Promise<void>;
+}) {
+  const [name, setName] = useState(photo.uploader_name);
+  const [cat, setCat] = useState(photo.category);
+  const [busy, setBusy] = useState(false);
+  const field = "w-full rounded-lg border border-border bg-background px-2 py-1.5 text-xs outline-none focus:border-primary";
+  const listId = `cats-${photo.id}`;
+
+  async function replaceFile(file: File | undefined) {
+    if (!file || !file.type.startsWith("image/")) return;
+    setBusy(true);
+    try {
+      const optimized = await compressImage(file);
+      const path = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}_${optimized.name.replace(/[^\w.-]/g, "_")}`;
+      const { error } = await supabase.storage.from("photos").upload(path, optimized, { contentType: optimized.type });
+      if (error) throw error;
+      await onSave({ storage_path: path, file_name: file.name });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const dirty = name.trim() !== photo.uploader_name || cat.trim() !== photo.category;
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-border bg-input">
+      <img src={photo.url} alt={photo.uploader_name} loading="lazy" className="aspect-square w-full object-cover" />
+      <div className="grid gap-1.5 p-2">
+        <input value={name} onChange={(e) => setName(e.target.value)} aria-label="Photo name" className={field} />
+        <input value={cat} onChange={(e) => setCat(e.target.value)} list={listId} aria-label="Category" className={field} />
+        <datalist id={listId}>
+          {categories.map((c) => <option key={c} value={c} />)}
+        </datalist>
+        <label className="cursor-pointer rounded-lg border border-dashed border-border px-2 py-1 text-center text-[11px] text-muted-foreground hover:text-primary">
+          {busy ? "Replacing…" : "Change file"}
+          <input type="file" accept="image/*" className="hidden" disabled={busy} onChange={(e) => void replaceFile(e.target.files?.[0])} />
+        </label>
+        <div className="flex gap-1.5">
+          <button
+            disabled={!dirty || busy || !name.trim() || !cat.trim()}
+            onClick={async () => {
+              setBusy(true);
+              await onSave({ uploader_name: name.trim(), category: cat.trim() });
+              setBusy(false);
+            }}
+            className="flex-1 rounded-lg bg-primary px-2 py-1 text-xs font-semibold text-primary-foreground disabled:opacity-40"
+          >
+            Save
+          </button>
+          <button onClick={onDelete} className="rounded-lg bg-destructive px-2 py-1 text-xs font-semibold text-destructive-foreground">
+            Delete
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

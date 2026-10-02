@@ -1,47 +1,56 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-export type SiteSettings = {
-  brandName: string;
-  title: string;
-  tagline: string;
-  uploadLabel: string;
-  footerText: string;
-  background: string;
-  foreground: string;
-  accent: string;
-  accent2: string;
-};
+export const SETTING_KEYS = [
+  "brandName",
+  "title",
+  "tagline",
+  "uploadLabel",
+  "footerText",
+  "background",
+  "foreground",
+  "accent",
+  "accent2",
+  "cardBg",
+  "cardText",
+  "border",
+  "mutedText",
+  "inputBg",
+  "starColor",
+  "titleColor",
+  "radius",
+  "titleFont",
+  "bodyFont",
+  "animatedBg",
+] as const;
 
-export const EMPTY_SETTINGS: SiteSettings = {
-  brandName: "",
-  title: "",
-  tagline: "",
-  uploadLabel: "",
-  footerText: "",
-  background: "",
-  foreground: "",
-  accent: "",
-  accent2: "",
-};
+export type SiteSettings = Record<(typeof SETTING_KEYS)[number], string>;
+
+export const EMPTY_SETTINGS = Object.fromEntries(SETTING_KEYS.map((k) => [k, ""])) as SiteSettings;
 
 export function normalizeSettings(raw: unknown): SiteSettings {
   const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
   const out = { ...EMPTY_SETTINGS };
-  for (const k of Object.keys(out) as (keyof SiteSettings)[]) {
+  for (const k of SETTING_KEYS) {
     if (typeof o[k] === "string") out[k] = (o[k] as string).slice(0, 400);
   }
   return out;
 }
 
-/** Applies colour overrides as CSS variables on the page root. */
+/** Applies colour/style overrides as CSS variables on the page root. */
 export function applyTheme(s: SiteSettings) {
   const root = document.documentElement.style;
   const map: [keyof SiteSettings, string[]][] = [
     ["background", ["--background"]],
-    ["foreground", ["--foreground", "--card-foreground"]],
+    ["foreground", ["--foreground"]],
     ["accent", ["--primary", "--ring", "--cyan"]],
     ["accent2", ["--pink"]],
+    ["cardBg", ["--card", "--popover"]],
+    ["cardText", ["--card-foreground", "--popover-foreground"]],
+    ["border", ["--border"]],
+    ["mutedText", ["--muted-foreground"]],
+    ["inputBg", ["--input"]],
+    ["starColor", ["--gold"]],
   ];
   for (const [key, vars] of map) {
     for (const v of vars) {
@@ -49,6 +58,13 @@ export function applyTheme(s: SiteSettings) {
       else root.removeProperty(v);
     }
   }
+  if (s.radius) root.setProperty("--radius", `${Number(s.radius) || 14}px`);
+  else root.removeProperty("--radius");
+  if (s.titleFont) root.setProperty("--pv-title-font", s.titleFont);
+  else root.removeProperty("--pv-title-font");
+  if (s.bodyFont) root.setProperty("--pv-body-font", s.bodyFont);
+  else root.removeProperty("--pv-body-font");
+  document.documentElement.classList.toggle("no-fx", s.animatedBg === "off");
 }
 
 /** Live site settings: loads once and subscribes to realtime publishes. */

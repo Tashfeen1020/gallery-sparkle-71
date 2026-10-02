@@ -255,6 +255,9 @@ function Index() {
         const id = (payload.old as { id?: string }).id;
         if (id) setPhotos((p) => p.filter((x) => x.id !== id));
       })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "photos" }, () => {
+        void loadPhotos();
+      })
       .subscribe();
     return () => {
       void supabase.removeChannel(channel);
@@ -404,7 +407,18 @@ function Index() {
       </div>
 
       <div className="mx-auto max-w-7xl px-3 pb-16 pt-4 sm:px-6 sm:pb-24 sm:pt-8 lg:px-8">
-        <div className="mb-4 flex items-center justify-end gap-2 sm:mb-5">
+        <div className="mb-3 flex items-center justify-between gap-2 sm:mb-4">
+          <button
+            type="button"
+            onClick={() => setUploadOpen((v) => !v)}
+            aria-expanded={uploadOpen}
+            aria-controls="upload-form"
+            className="btn-hero flex h-10 items-center gap-2 rounded-full px-4 text-sm font-semibold shadow-lg transition hover:brightness-110"
+          >
+            <span className={`text-lg leading-none transition ${uploadOpen ? "rotate-45" : ""}`}>+</span>
+            {site.uploadLabel || t.upload}
+          </button>
+          <div className="flex items-center gap-2">
           <label className="sr-only" htmlFor="lang">
             {t.language}
           </label>
@@ -413,7 +427,7 @@ function Index() {
             value={lang}
             onChange={(e) => setLang(e.target.value as Lang)}
             aria-label={t.language}
-            className="h-10 max-w-[10rem] rounded-full border border-border bg-input px-3 text-sm text-foreground outline-none focus:border-primary sm:max-w-none sm:px-4"
+            className="h-10 max-w-[8rem] rounded-full border border-border bg-input px-3 text-sm text-foreground outline-none focus:border-primary sm:max-w-none sm:px-4"
           >
             {LANGS.map((l) => (
               <option key={l.code} value={l.code}>
@@ -430,31 +444,17 @@ function Index() {
           >
             {theme === "dark" ? <SunIcon /> : <MoonIcon />}
           </button>
+          </div>
         </div>
 
-        <header className="mb-5 px-2 text-center sm:mb-7">
-          {site.brandName && (
-            <p className="mb-1 text-xs font-bold uppercase tracking-[0.3em] text-muted-foreground">{site.brandName}</p>
-          )}
-          <h1 className="text-gradient font-display text-4xl font-bold sm:text-5xl lg:text-6xl">{site.title || t.title}</h1>
-          <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">{site.tagline || t.tagline}</p>
-        </header>
-
-        <div className="flex justify-center">
-          <button
-            type="button"
-            onClick={() => setUploadOpen((v) => !v)}
-            aria-expanded={uploadOpen}
-            aria-controls="upload-form"
-            title={site.uploadLabel || t.upload}
-            aria-label={site.uploadLabel || t.upload}
-            className={`btn-hero grid h-14 w-14 place-items-center rounded-full text-2xl shadow-xl transition duration-300 hover:scale-110 ${
-              uploadOpen ? "rotate-45" : ""
-            }`}
+        <header className="mb-4 px-2 text-center sm:mb-5">
+          <h1
+            className={`${site.titleColor ? "" : "text-gradient"} font-display text-4xl font-bold sm:text-5xl lg:text-6xl`}
+            style={site.titleColor ? { color: site.titleColor } : undefined}
           >
-            +
-          </button>
-        </div>
+            {site.title || site.brandName || t.title}
+          </h1>
+        </header>
 
         {uploadOpen && (
         <section id="upload-form" className="thanks-pop mt-4 rounded-xl border border-border bg-card/95 p-4 shadow-xl backdrop-blur sm:p-5">
