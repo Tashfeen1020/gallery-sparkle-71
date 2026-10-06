@@ -676,15 +676,13 @@ function Index() {
                     height={300}
                     onLoad={(e) => {
                       const img = e.currentTarget;
-                      img.style.opacity = "1";
                       if (!ratios[p.id])
                         setRatios((r) => ({
                           ...r,
                           [p.id]: img.naturalWidth >= img.naturalHeight ? "landscape" : "portrait",
                         }));
                     }}
-                    style={{ opacity: 0 }}
-                    className="aspect-[4/3] w-full animate-pulse bg-muted object-cover transition duration-300 group-hover:scale-105 [&[style*='opacity: 1']]:animate-none"
+                    className="aspect-[4/3] w-full bg-muted object-cover transition duration-300 group-hover:scale-105"
                   />
                   <span className="absolute left-2 top-2 rounded-full bg-background/75 px-2.5 py-1 text-[11px] font-semibold backdrop-blur">
                     {categoryLabel(lang, p.category)}
