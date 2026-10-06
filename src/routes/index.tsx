@@ -654,7 +654,7 @@ function Index() {
           </p>
         ) : (
           <div className="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
-            {visible.map((p) => (
+            {visible.map((p, i) => (
               <article
                 key={p.id}
                 className="overflow-hidden rounded-xl border border-border bg-card shadow-lg"
@@ -669,8 +669,22 @@ function Index() {
                   <img
                     src={p.signedUrl}
                     alt={t.altPhoto(p.uploader_name)}
-                    loading="lazy"
-                    className="aspect-[4/3] w-full object-cover transition duration-300 group-hover:scale-105"
+                    loading={i < 8 ? "eager" : "lazy"}
+                    fetchPriority={i < 4 ? "high" : "auto"}
+                    decoding="async"
+                    width={400}
+                    height={300}
+                    onLoad={(e) => {
+                      const img = e.currentTarget;
+                      img.style.opacity = "1";
+                      if (!ratios[p.id])
+                        setRatios((r) => ({
+                          ...r,
+                          [p.id]: img.naturalWidth >= img.naturalHeight ? "landscape" : "portrait",
+                        }));
+                    }}
+                    style={{ opacity: 0 }}
+                    className="aspect-[4/3] w-full animate-pulse bg-muted object-cover transition duration-300 group-hover:scale-105 [&[style*='opacity: 1']]:animate-none"
                   />
                   <span className="absolute left-2 top-2 rounded-full bg-background/75 px-2.5 py-1 text-[11px] font-semibold backdrop-blur">
                     {categoryLabel(lang, p.category)}
