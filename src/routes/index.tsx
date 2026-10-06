@@ -202,14 +202,38 @@ function Index() {
 
     const rows = data ?? [];
     const paths = rows.map((r) => r.storage_path as string);
-    let urls: Record<string, string> = {};
-    if (paths.length) {
+    // Reuse cached signed links so the browser can serve photos from its cache.
+    const URL_CACHE = "pixel-vault-url-cache";
+    const now = Date.now();
+    let cache: Record<string, { u: string; e: number }> = {};
+    try {
+      cache = JSON.parse(localStorage.getItem(URL_CACHE) ?? "{}");
+    } catch {
+      cache = {};
+    }
+    const urls: Record<string, string> = {};
+    const missing: string[] = [];
+    for (const path of paths) {
+      const c = cache[path];
+      if (c && c.e > now) urls[path] = c.u;
+      else missing.push(path);
+    }
+    if (missing.length) {
       const { data: signed } = await supabase.storage
         .from("photos")
-        .createSignedUrls(paths, 60 * 60 * 24);
-      urls = Object.fromEntries(
-        (signed ?? []).map((s) => [s.path ?? "", s.signedUrl ?? ""]),
-      );
+        .createSignedUrls(missing, 60 * 60 * 24 * 7);
+      for (const s of signed ?? []) {
+        if (s.path && s.signedUrl) {
+          urls[s.path] = s.signedUrl;
+          cache[s.path] = { u: s.signedUrl, e: now + 1000 * 60 * 60 * 24 * 6 };
+        }
+      }
+    }
+    const keep = Object.fromEntries(paths.filter((x) => cache[x]).map((x) => [x, cache[x]]));
+    try {
+      localStorage.setItem(URL_CACHE, JSON.stringify(keep));
+    } catch {
+      /* storage full — ignore */
     }
 
     setPhotos(
@@ -228,6 +252,9 @@ function Index() {
   }, [notify, lang]);
 
   useEffect(() => {
+    // Only pre-measure every photo when the orientation filter is in use;
+    // otherwise sizes are read as each photo lazily appears on screen.
+    if (orientation === "All") return;
     let cancelled = false;
     for (const p of photos) {
       if (!p.signedUrl || ratios[p.id]) continue;
@@ -245,7 +272,7 @@ function Index() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [photos]);
+  }, [photos, orientation]);
 
   useEffect(() => {
     void loadPhotos();
@@ -627,7 +654,7 @@ function Index() {
           </p>
         ) : (
           <div className="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
-            {visible.map((p) => (
+            {visible.map((p, i) => (
               <article
                 key={p.id}
                 className="overflow-hidden rounded-xl border border-border bg-card shadow-lg"
@@ -642,8 +669,20 @@ function Index() {
                   <img
                     src={p.signedUrl}
                     alt={t.altPhoto(p.uploader_name)}
-                    loading="lazy"
-                    className="aspect-[4/3] w-full object-cover transition duration-300 group-hover:scale-105"
+                    loading={i < 8 ? "eager" : "lazy"}
+                    fetchPriority={i < 4 ? "high" : "auto"}
+                    decoding="async"
+                    width={400}
+                    height={300}
+                    onLoad={(e) => {
+                      const img = e.currentTarget;
+                      if (!ratios[p.id])
+                        setRatios((r) => ({
+                          ...r,
+                          [p.id]: img.naturalWidth >= img.naturalHeight ? "landscape" : "portrait",
+                        }));
+                    }}
+                    className="aspect-[4/3] w-full bg-muted object-cover transition duration-300 group-hover:scale-105"
                   />
                   <span className="absolute left-2 top-2 rounded-full bg-background/75 px-2.5 py-1 text-[11px] font-semibold backdrop-blur">
                     {categoryLabel(lang, p.category)}
