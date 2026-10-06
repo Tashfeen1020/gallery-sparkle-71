@@ -101,8 +101,14 @@ export const updatePhoto = createServerFn({ method: "POST" })
       .select("storage_path")
       .eq("id", id)
       .maybeSingle();
-    const update: Record<string, string> = { ...patch } as Record<string, string>;
-    if (patch.storage_path) update.url = patch.storage_path;
+    const update: { uploader_name?: string; category?: string; storage_path?: string; file_name?: string; url?: string } = {};
+    if (patch.uploader_name) update.uploader_name = patch.uploader_name;
+    if (patch.category) update.category = patch.category;
+    if (patch.file_name) update.file_name = patch.file_name;
+    if (patch.storage_path) {
+      update.storage_path = patch.storage_path;
+      update.url = patch.storage_path;
+    }
     const { error } = await supabaseAdmin.from("photos").update(update).eq("id", id);
     if (error) throw new Error(error.message);
     if (patch.storage_path && old?.storage_path && old.storage_path !== patch.storage_path) {
