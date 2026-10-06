@@ -11,7 +11,7 @@ function sessionConfig() {
     password: process.env["ADMIN_SESSION_SECRET"]!,
     name: "pv-admin",
     maxAge: 60 * 60 * 24 * 30,
-    cookie: { httpOnly: true, secure: true, sameSite: "lax" as const, path: "/" },
+    cookie: { httpOnly: true, secure: true, sameSite: "none" as const, partitioned: true, path: "/" },
   };
 }
 
