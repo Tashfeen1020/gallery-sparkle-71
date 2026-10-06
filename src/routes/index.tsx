@@ -202,14 +202,38 @@ function Index() {
 
     const rows = data ?? [];
     const paths = rows.map((r) => r.storage_path as string);
-    let urls: Record<string, string> = {};
-    if (paths.length) {
+    // Reuse cached signed links so the browser can serve photos from its cache.
+    const URL_CACHE = "pixel-vault-url-cache";
+    const now = Date.now();
+    let cache: Record<string, { u: string; e: number }> = {};
+    try {
+      cache = JSON.parse(localStorage.getItem(URL_CACHE) ?? "{}");
+    } catch {
+      cache = {};
+    }
+    const urls: Record<string, string> = {};
+    const missing: string[] = [];
+    for (const path of paths) {
+      const c = cache[path];
+      if (c && c.e > now) urls[path] = c.u;
+      else missing.push(path);
+    }
+    if (missing.length) {
       const { data: signed } = await supabase.storage
         .from("photos")
-        .createSignedUrls(paths, 60 * 60 * 24);
-      urls = Object.fromEntries(
-        (signed ?? []).map((s) => [s.path ?? "", s.signedUrl ?? ""]),
-      );
+        .createSignedUrls(missing, 60 * 60 * 24 * 7);
+      for (const s of signed ?? []) {
+        if (s.path && s.signedUrl) {
+          urls[s.path] = s.signedUrl;
+          cache[s.path] = { u: s.signedUrl, e: now + 1000 * 60 * 60 * 24 * 6 };
+        }
+      }
+    }
+    const keep = Object.fromEntries(paths.filter((x) => cache[x]).map((x) => [x, cache[x]]));
+    try {
+      localStorage.setItem(URL_CACHE, JSON.stringify(keep));
+    } catch {
+      /* storage full — ignore */
     }
 
     setPhotos(
@@ -228,6 +252,9 @@ function Index() {
   }, [notify, lang]);
 
   useEffect(() => {
+    // Only pre-measure every photo when the orientation filter is in use;
+    // otherwise sizes are read as each photo lazily appears on screen.
+    if (orientation === "All") return;
     let cancelled = false;
     for (const p of photos) {
       if (!p.signedUrl || ratios[p.id]) continue;
@@ -245,7 +272,7 @@ function Index() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [photos]);
+  }, [photos, orientation]);
 
   useEffect(() => {
     void loadPhotos();
